@@ -38,8 +38,8 @@
     <section class="section-block">
         <div class="section-heading">
             <div>
-                <p class="eyebrow">Curated</p>
-                <h2>おすすめ</h2>
+                <p class="eyebrow">Featured</p>
+                <h2>おすすめ拠点</h2>
             </div>
             <a href="{{ route('spots.index') }}">もっと見る</a>
         </div>
@@ -56,7 +56,7 @@
         <div class="section-heading">
             <div>
                 <p class="eyebrow">Latest</p>
-                <h2>最新公開</h2>
+                <h2>最新公開拠点</h2>
             </div>
             <a href="{{ route('spots.index', ['sort' => 'latest']) }}">もっと見る</a>
         </div>

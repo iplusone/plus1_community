@@ -141,6 +141,15 @@
         padding: 2rem 0 5rem;
     }
 
+    .breadcrumbs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-bottom: 1rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+    }
+
     .hero-panel,
     .section-block,
     .content-card,
@@ -295,6 +304,11 @@
         padding: 1rem;
     }
 
+    .spot-card__excerpt {
+        color: var(--muted);
+        line-height: 1.65;
+    }
+
     .mini-meta,
     .tag-row {
         display: flex;
@@ -368,6 +382,22 @@
     .search-panel {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         align-items: end;
+    }
+
+    .active-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .active-filters span {
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.68);
+        border: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.84rem;
     }
 
     .detail-grid {

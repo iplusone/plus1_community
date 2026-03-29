@@ -57,15 +57,31 @@ class SpotController extends Controller
                     'coupons',
                     'wordpressSite',
                 ])
+                ->withCount('children')
                 ->where('slug', $slug)
                 ->firstOrFail();
+
+            $relatedSpots = Spot::query()
+                ->visible()
+                ->with(['genres', 'tags'])
+                ->withCount('children')
+                ->whereKeyNot($spot->id)
+                ->where(function (Builder $query) use ($spot) {
+                    $query->where('prefecture', $spot->prefecture);
+
+                    if ($spot->genres->isNotEmpty()) {
+                        $query->orWhereHas('genres', fn (Builder $builder) => $builder->whereIn('genres.id', $spot->genres->pluck('id')));
+                    }
+                })
+                ->limit(6)
+                ->get();
         } catch (NotFoundHttpException $e) {
             throw $e;
         } catch (\Throwable $e) {
             abort(503, 'データベース未初期化のため、スポット詳細はまだ利用できません。');
         }
 
-        return view('spots.show', compact('spot'));
+        return view('spots.show', compact('spot', 'relatedSpots'));
     }
 
     private function applyFilters(Builder $query, Request $request): void

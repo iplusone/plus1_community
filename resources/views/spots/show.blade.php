@@ -3,6 +3,18 @@
 @section('title', $spot->name)
 
 @section('content')
+    <section class="breadcrumbs">
+        <a href="{{ route('home') }}">トップ</a>
+        <span>/</span>
+        <a href="{{ route('spots.index') }}">拠点一覧</a>
+        @if ($spot->parent)
+            <span>/</span>
+            <a href="{{ route('spots.show', $spot->parent) }}">{{ $spot->parent->name }}</a>
+        @endif
+        <span>/</span>
+        <strong>{{ $spot->name }}</strong>
+    </section>
+
     <section class="hero-panel detail-hero">
         <div>
             <p class="eyebrow">Base Detail</p>
@@ -103,6 +115,14 @@
         <article class="content-card">
             <h2>アクセス</h2>
             <p>{{ $spot->access_text ?: 'アクセス情報はまだ登録されていません。' }}</p>
+            @php
+                $mapQuery = trim(collect([$spot->prefecture, $spot->city, $spot->town, $spot->address_line])->filter()->join(' '));
+            @endphp
+            @if ($mapQuery !== '')
+                <div class="hero-actions">
+                    <a class="button-secondary" href="https://www.google.com/maps/search/?api=1&query={{ urlencode($mapQuery) }}" target="_blank" rel="noreferrer">地図で見る</a>
+                </div>
+            @endif
         </article>
 
         <article class="content-card">
@@ -198,5 +218,22 @@
                 <p>配下スポットはありません。</p>
             @endforelse
         </article>
+    </section>
+
+    <section class="section-block">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Related</p>
+                <h2>関連する拠点</h2>
+            </div>
+            <a href="{{ route('spots.index') }}">一覧へ</a>
+        </div>
+        <div class="spot-grid">
+            @forelse ($relatedSpots as $relatedSpot)
+                @include('spots.partials.card', ['spot' => $relatedSpot])
+            @empty
+                <div class="empty-panel">関連拠点はまだありません。</div>
+            @endforelse
+        </div>
     </section>
 @endsection

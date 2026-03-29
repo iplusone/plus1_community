@@ -34,6 +34,18 @@
                 <p>{{ $dbWarning }}</p>
             </div>
         @endif
+
+        @if (! $dbWarning)
+            <div class="active-filters">
+                @foreach (['q' => 'キーワード', 'prefecture' => '地域', 'genre' => 'ジャンル', 'tag' => 'タグ'] as $key => $label)
+                    @if (! empty($filters[$key]))
+                        <span>{{ $label }}: {{ $filters[$key] }}</span>
+                    @endif
+                @endforeach
+                <span>並び: {{ $sort === 'popular' ? '人気順' : '新着順' }}</span>
+                <span>表示: {{ $viewMode === 'list' ? 'リスト' : 'カード' }}</span>
+            </div>
+        @endif
     </section>
 
     <section class="section-block">

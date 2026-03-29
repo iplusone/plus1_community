@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Spot;
+use App\Models\SpotFeaturedSlot;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Collection;
 
 class HomeController extends Controller
 {
@@ -27,10 +27,29 @@ class HomeController extends Controller
                 ->with(['genres', 'tags'])
                 ->withCount('children');
 
-            $sections['featuredSpots'] = (clone $baseQuery)
-                ->orderByDesc('view_count')
-                ->limit(10)
+            $sections['featuredSpots'] = SpotFeaturedSlot::query()
+                ->where('slot_type', 'featured')
+                ->where(function ($query) {
+                    $query->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+                })
+                ->where(function ($query) {
+                    $query->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+                })
+                ->with(['spot' => fn ($query) => $query->visible()->with(['genres', 'tags'])->withCount('children')])
+                ->orderBy('sort_order')
                 ->get();
+            $sections['featuredSpots'] = $sections['featuredSpots']
+                ->pluck('spot')
+                ->filter()
+                ->take(10)
+                ->values();
+
+            if ($sections['featuredSpots']->isEmpty()) {
+                $sections['featuredSpots'] = (clone $baseQuery)
+                    ->orderByDesc('view_count')
+                    ->limit(10)
+                    ->get();
+            }
 
             $sections['latestSpots'] = (clone $baseQuery)
                 ->orderByDesc('published_at')

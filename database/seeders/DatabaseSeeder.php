@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Genre;
 use App\Models\Spot;
+use App\Models\SpotFeaturedSlot;
 use App\Models\SpotSearchDocument;
 use App\Models\Tag;
 use App\Models\User;
@@ -196,6 +197,28 @@ class DatabaseSeeder extends Seeder
             'api_base_url' => 'https://example.com/plus1-community-hq/wp-json/wp/v2',
             'is_active' => true,
             'last_synced_at' => now()->subHours(6),
+        ]);
+
+        SpotFeaturedSlot::query()->create([
+            'spot_id' => $hq->id,
+            'slot_type' => 'featured',
+            'sort_order' => 1,
+            'starts_at' => now()->subDay(),
+            'ends_at' => now()->addMonth(),
+        ]);
+        SpotFeaturedSlot::query()->create([
+            'spot_id' => $branch->id,
+            'slot_type' => 'featured',
+            'sort_order' => 2,
+            'starts_at' => now()->subDay(),
+            'ends_at' => now()->addMonth(),
+        ]);
+        SpotFeaturedSlot::query()->create([
+            'spot_id' => $school->id,
+            'slot_type' => 'featured',
+            'sort_order' => 3,
+            'starts_at' => now()->subDay(),
+            'ends_at' => now()->addMonth(),
         ]);
 
         foreach ([$hq, $branch, $school, $draftSpot] as $spot) {
