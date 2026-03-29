@@ -78,6 +78,12 @@ php artisan test
 
 `c.sh` には Laravel のキャッシュクリア用コマンドをまとめています。
 
+## ドキュメント
+
+- 要件定義: `docs/portal-requirements.md`
+- 実装方針: `docs/implementation-outline.md`
+- データモデル案: `docs/data-model-draft.md`
+
 ## 整備内容
 
 - Docker Compose の構文エラーを修正
