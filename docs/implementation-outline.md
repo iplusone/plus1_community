@@ -22,6 +22,8 @@
 ### 管理者権限
 
 - ユーザー
+- 企業
+- 企業招待 / 初回登録
 - 拠点管理者紐付け
 - 階層ベースの管理可能範囲
 
@@ -51,6 +53,9 @@
 
 管理系:
 
+- `companies`
+- `company_registrations`
+- `company_user_invitations`
 - `spots`
 - `spot_admins`
 - `users`
@@ -99,6 +104,64 @@
 - `published_at`
 - `view_count`
 - `sort_order`
+
+## 4.1 企業・承認まわりで最低限必要なテーブル
+
+### `companies`
+
+- 企業本体
+- 初回登録後、承認対象となる管理単位
+
+候補カラム:
+
+- `id`
+- `name`
+- `slug`
+- `status`
+- `approved_at`
+- `approved_by`
+- `created_at`
+- `updated_at`
+
+### `company_registrations`
+
+- 初回企業登録申請
+- メール登録から本登録完了までを管理
+
+候補カラム:
+
+- `id`
+- `email`
+- `token`
+- `company_name`
+- `applicant_name`
+- `status`
+- `email_verified_at`
+- `submitted_at`
+- `reviewed_at`
+- `review_note`
+- `created_at`
+- `updated_at`
+
+### `company_user_invitations`
+
+- 企業管理者・拠点管理者の招待
+- 招待メールベースで登録導線を管理
+
+候補カラム:
+
+- `id`
+- `company_id`
+- `spot_id`
+- `email`
+- `token`
+- `role_scope`
+- `status`
+- `invited_by`
+- `accepted_at`
+- `expires_at`
+- `created_at`
+- `updated_at`
 
 ## 5. 検索用ドキュメントの考え方
 
@@ -180,3 +243,4 @@
 2. Laravel の migration 設計を作る
 3. 管理画面の権限ルールをユースケース単位で整理する
 4. 検索インデックス更新方式をイベント駆動にするか決める
+5. 企業登録申請と招待フローの状態遷移を定義する

@@ -14,6 +14,9 @@
 
 ### 中核
 
+- `companies`
+- `company_registrations`
+- `company_user_invitations`
 - `spots`
 - `users`
 - `spot_admins`
@@ -54,6 +57,7 @@
 主なカラム候補:
 
 - `id`
+- `company_id`
 - `parent_id`
 - `depth`
 - `name`
@@ -81,6 +85,75 @@
 - `parent_id` により自己参照
 - `depth` は検索や表示制御を簡単にするため冗長保持
 - `slug` は詳細ページ URL 用
+- すべての拠点(スポット)は 1 企業に属する
+
+### `companies`
+
+企業本体。
+
+主なカラム候補:
+
+- `id`
+- `name`
+- `slug`
+- `status`
+- `approved_at`
+- `approved_by`
+- `created_at`
+- `updated_at`
+
+備考:
+
+- `status` は `pre_registered`, `email_verified`, `pending_approval`, `approved`, `rejected` を想定
+- 最上位管理者は企業承認時に確定する
+
+### `company_registrations`
+
+企業の初回登録申請。
+
+主なカラム候補:
+
+- `id`
+- `email`
+- `token`
+- `company_name`
+- `applicant_name`
+- `status`
+- `email_verified_at`
+- `submitted_at`
+- `reviewed_at`
+- `review_note`
+- `created_at`
+- `updated_at`
+
+備考:
+
+- メールアドレス登録から本登録、運営審査までを管理
+- 申請承認後に `companies` と最上位管理者ユーザを生成する
+
+### `company_user_invitations`
+
+企業配下ユーザの招待。
+
+主なカラム候補:
+
+- `id`
+- `company_id`
+- `spot_id`
+- `email`
+- `token`
+- `role_scope`
+- `status`
+- `invited_by`
+- `accepted_at`
+- `expires_at`
+- `created_at`
+- `updated_at`
+
+備考:
+
+- 最上位管理者が配下拠点(スポット)の管理者をメールで招待する
+- `spot_id` があれば拠点単位招待、なければ企業全体管理招待として扱える
 
 ### `users`
 
@@ -103,6 +176,7 @@
 - `spot_id`
 - `user_id`
 - `role_scope`
+- `company_id`
 - `created_at`
 - `updated_at`
 
@@ -347,6 +421,8 @@ PV 集計の元データ。
 
 ## 4. リレーション概要
 
+- `companies` 1:N `spots`
+- `companies` 1:N `company_user_invitations`
 - `spots` 1:N `spots`（親子）
 - `spots` N:M `users` through `spot_admins`
 - `spots` 1:N `spot_media`
@@ -381,6 +457,7 @@ PV 集計の元データ。
 ## 6. 未確定事項
 
 - 管理者権限をロール名で持つか、可視範囲で持つか
+- 企業登録申請と `companies` の責務分離をどこまで厳密にするか
 - 地域を完全マスタ化するか、拠点に文字列も持たせるか
 - タグサジェストの正規化ルール
 - WordPress 記事を都度取得するか、ローカル同期するか
