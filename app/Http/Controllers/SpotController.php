@@ -14,20 +14,25 @@ class SpotController extends Controller
     {
         $spots = collect();
         $dbWarning = null;
+        $sort = $request->string('sort')->value() ?: 'latest';
+        $view = $request->string('view')->value() ?: 'card';
 
         try {
-            $query = Spot::query()->visible()->with(['genres', 'tags'])->orderByDesc('published_at');
+            $query = Spot::query()->visible()->with(['genres', 'tags']);
 
             $this->applyFilters($query, $request);
+            $this->applySorting($query, $sort);
 
-            $spots = $query->paginate(12)->withQueryString();
+            $spots = $query->paginate(50)->withQueryString();
         } catch (\Throwable $e) {
             $dbWarning = 'データベース未初期化のため、スポット検索はまだ利用できません。';
         }
 
         return view('spots.index', [
             'spots' => $spots,
-            'filters' => $request->only(['q', 'prefecture', 'genre', 'tag']),
+            'filters' => $request->only(['q', 'prefecture', 'genre', 'tag', 'sort', 'view']),
+            'sort' => in_array($sort, ['latest', 'popular'], true) ? $sort : 'latest',
+            'viewMode' => in_array($view, ['card', 'list'], true) ? $view : 'card',
             'dbWarning' => $dbWarning,
         ]);
     }
@@ -78,5 +83,16 @@ class SpotController extends Controller
         if ($tag !== '') {
             $query->whereHas('tags', fn (Builder $builder) => $builder->where('name', 'like', "%{$tag}%"));
         }
+    }
+
+    private function applySorting(Builder $query, string $sort): void
+    {
+        if ($sort === 'popular') {
+            $query->orderByDesc('view_count')->orderByDesc('published_at');
+
+            return;
+        }
+
+        $query->orderByDesc('published_at')->orderByDesc('id');
     }
 }
