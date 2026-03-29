@@ -111,6 +111,93 @@ class DatabaseSeeder extends Seeder
         $branch->tags()->syncWithoutDetaching([$tagWeekend->id, $tagChildcare->id]);
         $school->tags()->syncWithoutDetaching([$tagOnline->id]);
 
+        $hq->businessHours()->createMany([
+            ['day_of_week' => 1, 'opens_at' => '10:00', 'closes_at' => '19:00', 'is_closed' => false, 'note' => '通常営業'],
+            ['day_of_week' => 2, 'opens_at' => '10:00', 'closes_at' => '19:00', 'is_closed' => false, 'note' => '通常営業'],
+            ['day_of_week' => 3, 'opens_at' => '10:00', 'closes_at' => '19:00', 'is_closed' => false, 'note' => '通常営業'],
+            ['day_of_week' => 4, 'opens_at' => '10:00', 'closes_at' => '19:00', 'is_closed' => false, 'note' => '通常営業'],
+            ['day_of_week' => 5, 'opens_at' => '10:00', 'closes_at' => '20:00', 'is_closed' => false, 'note' => '夜間相談対応'],
+            ['day_of_week' => 6, 'opens_at' => '11:00', 'closes_at' => '17:00', 'is_closed' => false, 'note' => '予約優先'],
+            ['day_of_week' => 0, 'opens_at' => null, 'closes_at' => null, 'is_closed' => true, 'note' => '定休日'],
+        ]);
+
+        $consultingService = $hq->services()->create([
+            'title' => '相談支援プログラム',
+            'description' => '個別相談と伴走型フォローを組み合わせた基本支援です。',
+            'sort_order' => 1,
+        ]);
+        $careerService = $hq->services()->create([
+            'title' => 'キャリア相談',
+            'description' => '進路相談、就職相談、リスキリング計画づくりを支援します。',
+            'sort_order' => 2,
+        ]);
+        $consultingService->menus()->createMany([
+            ['spot_id' => $hq->id, 'name' => '初回相談', 'description' => 'ヒアリングと課題整理', 'price_text' => '無料', 'sort_order' => 1],
+            ['spot_id' => $hq->id, 'name' => '継続伴走プラン', 'description' => '月次面談とアクション設計', 'price_text' => '月額 9,800円', 'sort_order' => 2],
+        ]);
+        $careerService->menus()->createMany([
+            ['spot_id' => $hq->id, 'name' => 'キャリア棚卸し', 'description' => 'スキル可視化と方向性整理', 'price_text' => '5,500円', 'sort_order' => 1],
+        ]);
+
+        $branch->services()->create([
+            'title' => '地域ワークショップ',
+            'description' => '少人数の対話型イベントと地域連携プログラムを実施します。',
+            'sort_order' => 1,
+        ]);
+
+        $schoolService = $school->services()->create([
+            'title' => '学習・進路サポート',
+            'description' => '学習支援、面談、保護者相談をワンストップで提供します。',
+            'sort_order' => 1,
+        ]);
+        $schoolService->menus()->createMany([
+            ['spot_id' => $school->id, 'name' => '個別学習コース', 'description' => '1対1の学習伴走', 'price_text' => '月額 12,000円', 'sort_order' => 1],
+            ['spot_id' => $school->id, 'name' => '保護者面談', 'description' => '進路相談と家庭内サポートの整理', 'price_text' => '1回 3,000円', 'sort_order' => 2],
+        ]);
+
+        $hq->staff()->createMany([
+            ['name' => '山田 彩', 'profile' => '相談支援コーディネーター。地域連携と伴走支援を担当。', 'sort_order' => 1],
+            ['name' => '中村 亮', 'profile' => 'キャリアアドバイザー。進路相談と就労支援を担当。', 'sort_order' => 2],
+        ]);
+        $school->staff()->createMany([
+            ['name' => '佐藤 真紀', 'profile' => '学習コーチ。対面学習と保護者面談を担当。', 'sort_order' => 1],
+        ]);
+
+        $hq->coupons()->create([
+            'title' => '初回相談無料',
+            'content' => '登録月は初回相談を無料で利用できます。',
+            'conditions' => '新規登録企業限定',
+            'starts_at' => now()->subWeek(),
+            'expires_at' => now()->addMonth(),
+            'is_active' => true,
+        ]);
+        $school->coupons()->create([
+            'title' => '保護者面談割引',
+            'content' => '初回の保護者面談を 50% オフで案内します。',
+            'conditions' => '学習コース体験申込者',
+            'starts_at' => now()->subDays(3),
+            'expires_at' => now()->addWeeks(2),
+            'is_active' => true,
+        ]);
+
+        $hq->media()->createMany([
+            ['type' => 'image', 'path' => 'demo/hq-lounge.jpg', 'caption' => '相談ラウンジ', 'sort_order' => 1],
+            ['type' => 'image', 'path' => 'demo/hq-seminar.jpg', 'caption' => 'セミナースペース', 'sort_order' => 2],
+        ]);
+        $school->media()->create([
+            'type' => 'image',
+            'path' => 'demo/school-classroom.jpg',
+            'caption' => '学習スペース',
+            'sort_order' => 1,
+        ]);
+
+        $hq->wordpressSite()->create([
+            'base_url' => 'https://example.com/plus1-community-hq',
+            'api_base_url' => 'https://example.com/plus1-community-hq/wp-json/wp/v2',
+            'is_active' => true,
+            'last_synced_at' => now()->subHours(6),
+        ]);
+
         foreach ([$hq, $branch, $school, $draftSpot] as $spot) {
             SpotSearchDocument::query()->updateOrCreate(
                 ['spot_id' => $spot->id],

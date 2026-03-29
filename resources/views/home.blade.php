@@ -6,19 +6,19 @@
     <section class="hero-panel">
         <div>
             <p class="eyebrow">Portal Platform</p>
-            <h1>スポットベースで情報発信と検索を両立するポータル基盤</h1>
+            <h1>拠点情報を見つけやすく、伝わりやすくするポータル基盤</h1>
             <p class="hero-copy">
-                組織階層を保ちながら、各拠点が独立したページを持ち、検索導線と運用管理をひとつにまとめるための土台です。
+                組織階層を保ちながら、各拠点(スポット)が独立したページを持ち、基本情報、サービス、スタッフ、クーポンまで一画面で届けるための土台です。
             </p>
             <div class="hero-actions">
-                <a class="button-primary" href="{{ route('spots.index') }}">スポットを探す</a>
+                <a class="button-primary" href="{{ route('spots.index') }}">拠点を探す</a>
                 <a class="button-secondary" href="{{ route('admin.spots.index') }}">管理画面へ</a>
             </div>
         </div>
 
         <div class="stats-panel">
             <div>
-                <span>総スポット数</span>
+                <span>総拠点数</span>
                 <strong>{{ number_format($stats['total_spots']) }}</strong>
             </div>
             <div>
@@ -47,7 +47,7 @@
             @forelse ($featuredSpots as $spot)
                 @include('spots.partials.card', ['spot' => $spot])
             @empty
-                <div class="empty-panel">おすすめに表示するスポットはまだありません。</div>
+                <div class="empty-panel">おすすめに表示する拠点はまだありません。</div>
             @endforelse
         </div>
     </section>
@@ -64,7 +64,7 @@
             @forelse ($latestSpots as $spot)
                 @include('spots.partials.card', ['spot' => $spot])
             @empty
-                <div class="empty-panel">最新公開スポットはまだありません。</div>
+                <div class="empty-panel">最新公開拠点はまだありません。</div>
             @endforelse
         </div>
     </section>
@@ -81,7 +81,7 @@
             @forelse ($randomSpots as $spot)
                 @include('spots.partials.card', ['spot' => $spot])
             @empty
-                <div class="empty-panel">ランダム表示できるスポットはまだありません。</div>
+                <div class="empty-panel">ランダム表示できる拠点はまだありません。</div>
             @endforelse
         </div>
     </section>

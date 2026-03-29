@@ -18,7 +18,10 @@ class SpotController extends Controller
         $view = $request->string('view')->value() ?: 'card';
 
         try {
-            $query = Spot::query()->visible()->with(['genres', 'tags']);
+            $query = Spot::query()
+                ->visible()
+                ->with(['genres', 'tags'])
+                ->withCount('children');
 
             $this->applyFilters($query, $request);
             $this->applySorting($query, $sort);
@@ -42,7 +45,18 @@ class SpotController extends Controller
         try {
             $spot = Spot::query()
                 ->visible()
-                ->with(['children', 'genres', 'tags', 'businessHours', 'services.menus', 'media', 'staff', 'coupons'])
+                ->with([
+                    'parent',
+                    'children',
+                    'genres',
+                    'tags',
+                    'businessHours',
+                    'services.menus',
+                    'media',
+                    'staff',
+                    'coupons',
+                    'wordpressSite',
+                ])
                 ->where('slug', $slug)
                 ->firstOrFail();
         } catch (NotFoundHttpException $e) {

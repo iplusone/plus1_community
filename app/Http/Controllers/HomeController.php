@@ -22,7 +22,10 @@ class HomeController extends Controller
         ];
 
         try {
-            $baseQuery = Spot::query()->visible();
+            $baseQuery = Spot::query()
+                ->visible()
+                ->with(['genres', 'tags'])
+                ->withCount('children');
 
             $sections['featuredSpots'] = (clone $baseQuery)
                 ->orderByDesc('view_count')
