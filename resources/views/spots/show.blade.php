@@ -3,6 +3,12 @@
 @section('title', $spot->name)
 
 @section('content')
+    @php
+        $fullAddress = trim(collect([$spot->prefecture, $spot->city, $spot->town, $spot->address_line])->filter()->join(' '));
+        $mapQuery = $fullAddress;
+        $weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
+    @endphp
+
     <section class="breadcrumbs">
         <a href="{{ route('home') }}">トップ</a>
         <span>/</span>
@@ -15,13 +21,13 @@
         <strong>{{ $spot->name }}</strong>
     </section>
 
-    <section class="hero-panel detail-hero">
+    <section class="spot-header">
         <div>
             <p class="eyebrow">Base Detail</p>
             <h1>{{ $spot->name }}</h1>
-            <p class="hero-copy">{{ $spot->description ?: 'このスポットの紹介文はまだ登録されていません。' }}</p>
+            <p class="hero-copy">{{ $spot->description ?: 'この拠点(スポット)の紹介文はまだ登録されていません。' }}</p>
             <div class="chip-row">
-                <span>{{ trim(collect([$spot->prefecture, $spot->city, $spot->town])->filter()->join(' ')) ?: '地域未設定' }}</span>
+                <span>{{ $fullAddress ?: '住所未設定' }}</span>
                 <span>{{ $spot->phone ?: '電話番号未設定' }}</span>
                 <span>{{ $spot->business_hours_text ?: '営業時間未設定' }}</span>
                 <span>{{ $spot->holiday_text ?: '定休日未設定' }}</span>
@@ -37,6 +43,7 @@
                 </div>
             @endif
         </div>
+
         <div class="stats-panel">
             <div>
                 <span>公開日時</span>
@@ -48,192 +55,236 @@
             </div>
             <div>
                 <span>配下拠点</span>
-                <strong>{{ $spot->children->count() }}</strong>
+                <strong>{{ $spot->children_count }}</strong>
             </div>
         </div>
     </section>
 
-    <section class="detail-grid detail-grid--primary">
-        <article class="content-card content-card--wide">
-            <h2>基本情報</h2>
-            <div class="info-grid">
-                <div>
-                    <span>拠点名</span>
-                    <strong>{{ $spot->name }}</strong>
-                </div>
-                <div>
-                    <span>住所</span>
-                    <strong>{{ trim(collect([$spot->prefecture, $spot->city, $spot->town, $spot->address_line])->filter()->join(' ')) ?: '未設定' }}</strong>
-                </div>
-                <div>
-                    <span>電話番号</span>
-                    <strong>{{ $spot->phone ?: '未設定' }}</strong>
-                </div>
-                <div>
-                    <span>営業時間</span>
-                    <strong>{{ $spot->business_hours_text ?: '未設定' }}</strong>
-                </div>
-                <div>
-                    <span>定休日</span>
-                    <strong>{{ $spot->holiday_text ?: '未設定' }}</strong>
-                </div>
-                <div>
-                    <span>スラッグ</span>
-                    <strong>{{ $spot->slug }}</strong>
-                </div>
-            </div>
-        </article>
+    <nav class="detail-tabs">
+        <a href="#spot-info">拠点情報</a>
+        <a href="#news-blog" class="is-muted">ニュース&ブログ</a>
+        <a href="#photos">写真</a>
+        <a href="#services">サービス</a>
+        <a href="#staff">スタッフ紹介</a>
+        <a href="#access">地図/アクセス</a>
+    </nav>
 
-        <article class="content-card">
-            <h2>営業時間詳細</h2>
-            @forelse ($spot->businessHours->sortBy('day_of_week') as $hours)
-                <div class="stack-item stack-item--compact">
-                    <strong>{{ ['日', '月', '火', '水', '木', '金', '土'][$hours->day_of_week] }}曜</strong>
-                    <p>
-                        @if ($hours->is_closed)
-                            休業
-                        @else
-                            {{ optional($hours->opens_at)->format('H:i') }} - {{ optional($hours->closes_at)->format('H:i') }}
-                        @endif
-                        @if ($hours->note)
-                            / {{ $hours->note }}
-                        @endif
-                    </p>
-                </div>
-            @empty
-                <p>営業時間詳細はまだ登録されていません。</p>
-            @endforelse
-        </article>
-    </section>
-
-    <section class="detail-grid">
-        <article class="content-card">
-            <h2>特徴</h2>
-            <p>{{ $spot->features ?: '特徴はまだ登録されていません。' }}</p>
-        </article>
-
-        <article class="content-card">
-            <h2>アクセス</h2>
-            <p>{{ $spot->access_text ?: 'アクセス情報はまだ登録されていません。' }}</p>
-            @php
-                $mapQuery = trim(collect([$spot->prefecture, $spot->city, $spot->town, $spot->address_line])->filter()->join(' '));
-            @endphp
-            @if ($mapQuery !== '')
-                <div class="hero-actions">
-                    <a class="button-secondary" href="https://www.google.com/maps/search/?api=1&query={{ urlencode($mapQuery) }}" target="_blank" rel="noreferrer">地図で見る</a>
-                </div>
-            @endif
-        </article>
-
-        <article class="content-card">
-            <h2>サービス</h2>
-            @forelse ($spot->services as $service)
-                <div class="stack-item">
-                    <strong>{{ $service->title }}</strong>
-                    <p>{{ $service->description }}</p>
-                    @if ($service->menus->isNotEmpty())
-                        <div class="sub-list">
-                            @foreach ($service->menus as $menu)
-                                <div class="sub-list__item">
-                                    <div>
-                                        <strong>{{ $menu->name }}</strong>
-                                        <p>{{ $menu->description }}</p>
-                                    </div>
-                                    <span>{{ $menu->price_text ?: '料金未設定' }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-            @empty
-                <p>サービス情報はまだ登録されていません。</p>
-            @endforelse
-        </article>
-
-        <article class="content-card">
-            <h2>メディア</h2>
-            @forelse ($spot->media as $media)
-                <div class="media-card">
-                    <div class="media-card__visual">{{ strtoupper($media->type) }}</div>
-                    <div>
-                        <strong>{{ $media->caption ?: 'キャプション未設定' }}</strong>
-                        <p>{{ $media->path }}</p>
+    <section class="spot-detail-layout">
+        <div class="spot-main">
+            <article id="spot-info" class="content-card section-anchor">
+                <h2>{{ $spot->name }} の拠点情報</h2>
+                <div class="info-table">
+                    <div class="info-table__row">
+                        <span>住所</span>
+                        <strong>{{ $fullAddress ?: '未設定' }}</strong>
+                    </div>
+                    <div class="info-table__row">
+                        <span>電話</span>
+                        <strong>{{ $spot->phone ?: '未設定' }}</strong>
+                    </div>
+                    <div class="info-table__row">
+                        <span>営業時間</span>
+                        <strong>{{ $spot->business_hours_text ?: '未設定' }}</strong>
+                    </div>
+                    <div class="info-table__row">
+                        <span>定休日</span>
+                        <strong>{{ $spot->holiday_text ?: '未設定' }}</strong>
+                    </div>
+                    <div class="info-table__row">
+                        <span>特徴</span>
+                        <strong>{{ $spot->features ?: '未設定' }}</strong>
+                    </div>
+                    <div class="info-table__row">
+                        <span>スラッグ</span>
+                        <strong>{{ $spot->slug }}</strong>
                     </div>
                 </div>
-            @empty
-                <p>メディアはまだ登録されていません。</p>
-            @endforelse
-        </article>
+            </article>
 
-        <article class="content-card">
-            <h2>スタッフ</h2>
-            @forelse ($spot->staff as $member)
-                <div class="profile-card">
-                    <strong>{{ $member->name }}</strong>
-                    <p>{{ $member->profile }}</p>
+            <article id="access" class="content-card section-anchor">
+                <h2>{{ $spot->name }} の地図</h2>
+                @if ($mapQuery !== '')
+                    <div class="map-frame">
+                        <iframe
+                            src="https://www.google.com/maps?q={{ urlencode($mapQuery) }}&output=embed"
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            title="{{ $spot->name }} の地図"
+                        ></iframe>
+                    </div>
+                    <div class="info-table compact">
+                        <div class="info-table__row">
+                            <span>住所</span>
+                            <strong>{{ $fullAddress }}</strong>
+                        </div>
+                        <div class="info-table__row">
+                            <span>アクセス</span>
+                            <strong>{{ $spot->access_text ?: 'アクセス説明は未設定です。' }}</strong>
+                        </div>
+                    </div>
+                    <div class="hero-actions">
+                        <a class="button-secondary" href="https://www.google.com/maps/search/?api=1&query={{ urlencode($mapQuery) }}" target="_blank" rel="noreferrer">Googleマップで開く</a>
+                    </div>
+                @else
+                    <p>地図情報はまだ登録されていません。</p>
+                @endif
+            </article>
+
+            <article class="content-card">
+                <h2>{{ $spot->name }} の営業時間</h2>
+                <div class="hours-grid">
+                    @forelse ($spot->businessHours->sortBy('day_of_week') as $hours)
+                        <div class="hours-card">
+                            <span>{{ $weekdayLabels[$hours->day_of_week] }}曜</span>
+                            <strong>
+                                @if ($hours->is_closed)
+                                    休業
+                                @else
+                                    {{ optional($hours->opens_at)->format('H:i') }}〜{{ optional($hours->closes_at)->format('H:i') }}
+                                @endif
+                            </strong>
+                            @if ($hours->note)
+                                <small>{{ $hours->note }}</small>
+                            @endif
+                        </div>
+                    @empty
+                        <p>営業時間詳細はまだ登録されていません。</p>
+                    @endforelse
                 </div>
-            @empty
-                <p>スタッフ情報はまだ登録されていません。</p>
-            @endforelse
-        </article>
+            </article>
 
-        <article class="content-card">
-            <h2>クーポン</h2>
-            @forelse ($spot->coupons as $coupon)
-                <div class="coupon-card">
-                    <strong>{{ $coupon->title }}</strong>
-                    <p>{{ $coupon->content }}</p>
-                    <small>
-                        条件: {{ $coupon->conditions ?: '条件未設定' }}
-                        @if ($coupon->expires_at)
-                            / 有効期限: {{ $coupon->expires_at->format('Y-m-d') }}
-                        @endif
-                    </small>
+            <article id="news-blog" class="content-card section-anchor">
+                <h2>ニュース&ブログ</h2>
+                <div class="empty-panel compact">この拠点(スポット)のニュース&ブログは準備中です。</div>
+            </article>
+
+            <article id="photos" class="content-card section-anchor">
+                <h2>写真</h2>
+                <div class="photo-grid">
+                    @forelse ($spot->media as $media)
+                        <div class="photo-tile">
+                            <div class="photo-tile__visual">{{ strtoupper($media->type) }}</div>
+                            <strong>{{ $media->caption ?: 'キャプション未設定' }}</strong>
+                            <p>{{ $media->path }}</p>
+                        </div>
+                    @empty
+                        <div class="empty-panel compact">写真はまだ登録されていません。</div>
+                    @endforelse
                 </div>
-            @empty
-                <p>クーポンはまだありません。</p>
-            @endforelse
-        </article>
+            </article>
 
-        <article class="content-card">
-            <h2>外部コンテンツ連携</h2>
-            @if ($spot->wordpressSite)
-                <div class="stack-item">
-                    <strong>WordPress 連携あり</strong>
-                    <p>{{ $spot->wordpressSite->base_url }}</p>
-                    <p>最終同期: {{ optional($spot->wordpressSite->last_synced_at)->format('Y-m-d H:i') ?: '未同期' }}</p>
+            <article id="services" class="content-card section-anchor">
+                <h2>サービス</h2>
+                <div class="service-stack">
+                    @forelse ($spot->services as $service)
+                        <div class="service-card">
+                            <strong>{{ $service->title }}</strong>
+                            <p>{{ $service->description }}</p>
+                            @if ($service->menus->isNotEmpty())
+                                <div class="sub-list">
+                                    @foreach ($service->menus as $menu)
+                                        <div class="sub-list__item">
+                                            <div>
+                                                <strong>{{ $menu->name }}</strong>
+                                                <p>{{ $menu->description }}</p>
+                                            </div>
+                                            <span>{{ $menu->price_text ?: '料金未設定' }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @empty
+                        <div class="empty-panel compact">サービス情報はまだ登録されていません。</div>
+                    @endforelse
                 </div>
-            @else
-                <p>WordPress 連携はまだ設定されていません。</p>
-            @endif
-        </article>
+            </article>
 
-        <article class="content-card">
-            <h2>配下スポット</h2>
-            @forelse ($spot->children as $child)
-                <div class="stack-item">
-                    <a href="{{ route('spots.show', $child) }}">{{ $child->name }}</a>
+            <article id="staff" class="content-card section-anchor">
+                <h2>スタッフ紹介</h2>
+                <div class="staff-grid">
+                    @forelse ($spot->staff as $member)
+                        <div class="profile-card">
+                            <div class="profile-card__avatar">{{ strtoupper(mb_substr($member->name, 0, 1)) }}</div>
+                            <div>
+                                <strong>{{ $member->name }}</strong>
+                                <p>{{ $member->profile }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="empty-panel compact">スタッフ情報はまだ登録されていません。</div>
+                    @endforelse
                 </div>
-            @empty
-                <p>配下スポットはありません。</p>
-            @endforelse
-        </article>
-    </section>
+            </article>
+        </div>
 
-    <section class="section-block">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Related</p>
+        <aside class="spot-sidebar">
+            <section class="sidebar-card">
+                <h2>データ</h2>
+                <div class="sidebar-list">
+                    <div>
+                        <span>電話番号</span>
+                        <strong>{{ $spot->phone ?: '未設定' }}</strong>
+                    </div>
+                    <div>
+                        <span>拠点名</span>
+                        <strong>{{ $spot->name }}</strong>
+                    </div>
+                    <div>
+                        <span>住所</span>
+                        <strong>{{ $fullAddress ?: '未設定' }}</strong>
+                    </div>
+                    <div>
+                        <span>URL</span>
+                        <strong>
+                            @if ($spot->wordpressSite)
+                                <a href="{{ $spot->wordpressSite->base_url }}" target="_blank" rel="noreferrer">拠点HP</a>
+                            @else
+                                未設定
+                            @endif
+                        </strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="sidebar-card">
+                <h2>ジャンル / タグ</h2>
+                @if ($spot->genres->isNotEmpty() || $spot->tags->isNotEmpty())
+                    <div class="tag-row">
+                        @foreach ($spot->genres as $genre)
+                            <span>{{ $genre->name }}</span>
+                        @endforeach
+                        @foreach ($spot->tags as $tag)
+                            <span>#{{ $tag->name }}</span>
+                        @endforeach
+                    </div>
+                @else
+                    <p>未設定</p>
+                @endif
+            </section>
+
+            <section class="sidebar-card">
+                <h2>配下拠点</h2>
+                @forelse ($spot->children as $child)
+                    <div class="sidebar-link">
+                        <a href="{{ route('spots.show', $child) }}">{{ $child->name }}</a>
+                    </div>
+                @empty
+                    <p>配下拠点はありません。</p>
+                @endforelse
+            </section>
+
+            <section class="sidebar-card">
                 <h2>関連する拠点</h2>
-            </div>
-            <a href="{{ route('spots.index') }}">一覧へ</a>
-        </div>
-        <div class="spot-grid">
-            @forelse ($relatedSpots as $relatedSpot)
-                @include('spots.partials.card', ['spot' => $relatedSpot])
-            @empty
-                <div class="empty-panel">関連拠点はまだありません。</div>
-            @endforelse
-        </div>
+                @forelse ($relatedSpots as $relatedSpot)
+                    <div class="sidebar-link">
+                        <a href="{{ route('spots.show', $relatedSpot) }}">{{ $relatedSpot->name }}</a>
+                        <small>{{ trim(collect([$relatedSpot->prefecture, $relatedSpot->city])->filter()->join(' ')) }}</small>
+                    </div>
+                @empty
+                    <p>関連拠点はまだありません。</p>
+                @endforelse
+            </section>
+        </aside>
     </section>
 @endsection

@@ -150,6 +150,109 @@
         font-size: 0.92rem;
     }
 
+    .spot-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.8fr);
+        gap: 1.5rem;
+        padding: 2rem;
+        border: 1px solid var(--line);
+        border-radius: 1.6rem;
+        background: var(--panel);
+        box-shadow: 0 14px 40px rgba(36, 23, 13, 0.06);
+        backdrop-filter: blur(16px);
+    }
+
+    .detail-tabs {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .detail-tabs a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 3.25rem;
+        padding: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 1rem 1rem 0.35rem 0.35rem;
+        background: rgba(227, 213, 188, 0.7);
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .detail-tabs a.is-muted {
+        opacity: 0.65;
+    }
+
+    .spot-detail-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(290px, 0.7fr);
+        gap: 1.5rem;
+        margin-top: 1rem;
+        align-items: start;
+    }
+
+    .spot-main,
+    .spot-sidebar {
+        display: grid;
+        gap: 1.25rem;
+    }
+
+    .spot-sidebar {
+        position: sticky;
+        top: 5.6rem;
+    }
+
+    .sidebar-card {
+        border: 1px solid var(--line);
+        border-radius: 1.4rem;
+        overflow: hidden;
+        background: var(--panel);
+        box-shadow: 0 14px 40px rgba(36, 23, 13, 0.06);
+        backdrop-filter: blur(16px);
+    }
+
+    .sidebar-card h2 {
+        margin: 0;
+        padding: 1rem 1.2rem;
+        background: rgba(222, 212, 194, 0.52);
+    }
+
+    .sidebar-card > p,
+    .sidebar-list,
+    .sidebar-link,
+    .sidebar-card .tag-row {
+        padding: 1rem 1.2rem;
+    }
+
+    .sidebar-list {
+        display: grid;
+        gap: 0.9rem;
+    }
+
+    .sidebar-list span,
+    .sidebar-link small {
+        display: block;
+        color: var(--muted);
+        font-size: 0.84rem;
+        line-height: 1.6;
+    }
+
+    .sidebar-link + .sidebar-link {
+        border-top: 1px solid var(--line);
+    }
+
+    .sidebar-link a {
+        font-weight: 600;
+        color: var(--accent-deep);
+    }
+
+    .section-anchor {
+        scroll-margin-top: 6.5rem;
+    }
+
     .hero-panel,
     .section-block,
     .content-card,
@@ -416,6 +519,33 @@
         margin-top: 0;
     }
 
+    .info-table {
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.45);
+    }
+
+    .info-table.compact {
+        margin-top: 1rem;
+    }
+
+    .info-table__row {
+        display: grid;
+        grid-template-columns: 140px minmax(0, 1fr);
+        gap: 1rem;
+        padding: 1rem 1.1rem;
+        border-top: 1px solid var(--line);
+    }
+
+    .info-table__row:first-child {
+        border-top: 0;
+    }
+
+    .info-table__row span {
+        font-weight: 600;
+    }
+
     .stack-item + .stack-item {
         margin-top: 1rem;
         padding-top: 1rem;
@@ -429,21 +559,77 @@
         align-items: start;
     }
 
-    .info-grid {
+    .hours-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 0.9rem;
+    }
+
+    .hours-card {
+        display: grid;
+        gap: 0.45rem;
+        padding: 0.95rem;
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.52);
+    }
+
+    .hours-card span,
+    .hours-card small {
+        color: var(--muted);
+    }
+
+    .map-frame {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        background: #f0ebe2;
+    }
+
+    .map-frame iframe {
+        display: block;
+        width: 100%;
+        min-height: 500px;
+        border: 0;
+    }
+
+    .photo-grid,
+    .staff-grid,
+    .service-stack {
+        display: grid;
         gap: 1rem;
     }
 
-    .info-grid span {
-        display: block;
-        margin-bottom: 0.3rem;
-        color: var(--muted);
-        font-size: 0.82rem;
+    .photo-grid {
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     }
 
-    .info-grid strong {
-        line-height: 1.6;
+    .photo-tile {
+        display: grid;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.52);
+    }
+
+    .photo-tile__visual {
+        display: grid;
+        place-items: center;
+        min-height: 140px;
+        border-radius: 0.9rem;
+        color: white;
+        font-weight: 700;
+        background: linear-gradient(140deg, rgba(106, 171, 146, 0.95), rgba(69, 108, 89, 0.92));
+    }
+
+    .service-card {
+        display: grid;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.52);
     }
 
     .sub-list {
@@ -472,6 +658,23 @@
     .media-card {
         grid-template-columns: 92px minmax(0, 1fr);
         align-items: center;
+    }
+
+    .profile-card {
+        grid-template-columns: 72px minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .profile-card__avatar {
+        display: grid;
+        place-items: center;
+        width: 72px;
+        height: 72px;
+        border-radius: 999px;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(140deg, rgba(184, 92, 56, 0.95), rgba(127, 47, 29, 0.92));
     }
 
     .media-card__visual {
@@ -593,10 +796,20 @@
 
 @media (max-width: 900px) {
     .site-header,
-    .hero-panel {
+    .hero-panel,
+    .spot-header {
         grid-template-columns: 1fr;
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .detail-tabs,
+    .spot-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .spot-sidebar {
+        position: static;
     }
 
     .site-nav {
@@ -613,8 +826,14 @@
     .content-card--wide,
     .sub-list__item,
     .media-card,
-    .stack-item--compact {
+    .stack-item--compact,
+    .profile-card,
+    .info-table__row {
         grid-column: span 1;
         grid-template-columns: 1fr;
+    }
+
+    .map-frame iframe {
+        min-height: 320px;
     }
 }
