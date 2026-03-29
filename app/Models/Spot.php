@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Builder;
 
 class Spot extends Model
 {
@@ -48,6 +49,20 @@ class Spot extends Model
             'is_public' => 'boolean',
             'published_at' => 'datetime',
         ];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    public function scopeVisible(Builder $query): Builder
+    {
+        return $query
+            ->where('is_public', true)
+            ->where(function (Builder $builder) {
+                $builder->whereNull('published_at')->orWhere('published_at', '<=', now());
+            });
     }
 
     public function parent(): BelongsTo
