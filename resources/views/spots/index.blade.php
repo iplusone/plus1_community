@@ -14,8 +14,10 @@
         <form method="GET" action="{{ route('spots.index') }}" class="search-panel">
             <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="キーワード">
             <input type="text" name="prefecture" value="{{ $filters['prefecture'] ?? '' }}" placeholder="都道府県">
-            <input type="text" name="genre" value="{{ $filters['genre'] ?? '' }}" placeholder="ジャンル">
-            <input type="text" name="tag" value="{{ $filters['tag'] ?? '' }}" placeholder="タグ">
+            <input id="genre-input" type="text" name="genre" value="{{ $filters['genre'] ?? '' }}" placeholder="ジャンル" list="genre-suggestions">
+            <datalist id="genre-suggestions"></datalist>
+            <input id="tag-input" type="text" name="tag" value="{{ $filters['tag'] ?? '' }}" placeholder="タグ" list="tag-suggestions">
+            <datalist id="tag-suggestions"></datalist>
             <select name="sort">
                 <option value="latest" @selected($sort === 'latest')>新着順</option>
                 <option value="popular" @selected($sort === 'popular')>人気順</option>
