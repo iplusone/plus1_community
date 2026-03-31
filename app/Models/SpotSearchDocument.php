@@ -49,4 +49,29 @@ class SpotSearchDocument extends Model
     {
         return $this->belongsTo(Spot::class);
     }
+
+    public static function syncForSpot(Spot $spot): void
+    {
+        $spot->loadMissing(['genres', 'tags']);
+
+        static::updateOrCreate(
+            ['spot_id' => $spot->id],
+            [
+                'spot_name' => $spot->name,
+                'prefecture' => $spot->prefecture,
+                'city' => $spot->city,
+                'town' => $spot->town,
+                'full_address' => collect([$spot->prefecture, $spot->city, $spot->town, $spot->address_line])
+                    ->filter()->join(''),
+                'genre_names' => $spot->genres->pluck('name')->all(),
+                'genre_paths' => $spot->genres->pluck('name')->all(),
+                'tag_names' => $spot->tags->pluck('name')->all(),
+                'is_public' => (bool) $spot->is_public,
+                'published_at' => $spot->published_at,
+                'view_count' => $spot->view_count ?? 0,
+                'thumbnail_url' => $spot->thumbnail_path,
+                'indexed_at' => now(),
+            ]
+        );
+    }
 }

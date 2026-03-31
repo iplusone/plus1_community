@@ -26,6 +26,7 @@
                         <th>階層</th>
                         <th>親</th>
                         <th>公開</th>
+                        <th>詳細管理</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -36,6 +37,13 @@
                             <td>{{ $spot->depth }}</td>
                             <td>{{ $spot->parent?->name ?: '-' }}</td>
                             <td>{{ $spot->is_public ? '公開' : '非公開' }}</td>
+                            <td class="table-actions">
+                                <a href="{{ route('admin.spots.staff.index', $spot) }}">スタッフ</a>
+                                <a href="{{ route('admin.spots.coupons.index', $spot) }}">クーポン</a>
+                                <a href="{{ route('admin.spots.media.index', $spot) }}">メディア</a>
+                                <a href="{{ route('admin.spots.services.index', $spot) }}">サービス</a>
+                                <a href="{{ route('admin.spots.stations.index', $spot) }}">最寄り駅</a>
+                            </td>
                             <td class="table-actions">
                                 <a href="{{ route('spots.show', $spot->slug) }}">公開画面</a>
                                 <a href="{{ route('admin.spots.edit', $spot) }}">編集</a>

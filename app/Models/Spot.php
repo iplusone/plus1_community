@@ -35,6 +35,8 @@ class Spot extends Model
         'business_hours_text',
         'holiday_text',
         'thumbnail_path',
+        'latitude',
+        'longitude',
         'is_public',
         'published_at',
         'view_count',
@@ -49,6 +51,8 @@ class Spot extends Model
         return [
             'is_public' => 'boolean',
             'published_at' => 'datetime',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
     }
 
@@ -186,5 +190,18 @@ class Spot extends Model
     public function pageViews(): HasMany
     {
         return $this->hasMany(SpotPageView::class);
+    }
+
+    public function stations(): BelongsToMany
+    {
+        return $this->belongsToMany(Station::class, 'spot_stations')
+            ->withPivot(['distance_km', 'walking_minutes', 'sort_order'])
+            ->orderByPivot('sort_order')
+            ->withTimestamps();
+    }
+
+    public function spotStations(): HasMany
+    {
+        return $this->hasMany(SpotStation::class);
     }
 }

@@ -112,6 +112,8 @@ class SpotController extends Controller
             'business_hours_text' => ['nullable', 'string'],
             'holiday_text' => ['nullable', 'string'],
             'thumbnail_path' => ['nullable', 'string', 'max:255'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'is_public' => ['nullable', 'boolean'],
             'published_at' => ['nullable', 'date'],
             'sort_order' => ['nullable', 'integer', 'min:0'],

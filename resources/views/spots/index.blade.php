@@ -13,7 +13,8 @@
 
         <form method="GET" action="{{ route('spots.index') }}" class="search-panel">
             <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="キーワード">
-            <input type="text" name="prefecture" value="{{ $filters['prefecture'] ?? '' }}" placeholder="都道府県">
+            <input id="area-input" type="text" name="area" value="{{ $filters['area'] ?? '' }}" placeholder="エリア・駅・路線" list="area-suggestions" autocomplete="off">
+            <datalist id="area-suggestions"></datalist>
             <input id="genre-input" type="text" name="genre" value="{{ $filters['genre'] ?? '' }}" placeholder="ジャンル" list="genre-suggestions">
             <datalist id="genre-suggestions"></datalist>
             <input id="tag-input" type="text" name="tag" value="{{ $filters['tag'] ?? '' }}" placeholder="タグ" list="tag-suggestions">
@@ -37,7 +38,7 @@
 
         @if (! $dbWarning)
             <div class="active-filters">
-                @foreach (['q' => 'キーワード', 'prefecture' => '地域', 'genre' => 'ジャンル', 'tag' => 'タグ'] as $key => $label)
+                @foreach (['q' => 'キーワード', 'area' => 'エリア', 'genre' => 'ジャンル', 'tag' => 'タグ'] as $key => $label)
                     @if (! empty($filters[$key]))
                         <span>{{ $label }}: {{ $filters[$key] }}</span>
                     @endif

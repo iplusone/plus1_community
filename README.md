@@ -1,6 +1,6 @@
 # Plus1 Community
 
-開発用ひな形をコピーした直後でも、そのまま立ち上げて作業を始められるように整えた Laravel 12 ベースのスタータープロジェクトです。
+拠点(スポット)ベースのポータルプラットフォームです。企業傘下の店舗・支社・営業所などの拠点が独立したページを持ち、情報発信・検索・集客を実現します。
 
 ## 技術スタック
 
@@ -13,8 +13,11 @@
 
 ## できること
 
-- `/` で Laravel の welcome ページを表示
-- `php artisan test` で最小テストを実行
+- `/` でトップページを表示（おすすめ・最新・ランダム各 10 件）
+- `/spots` でスポット検索・一覧（キーワード / エリア / ジャンル / タグ / ソート / カード・リスト切替）
+- `/spots/{slug}` でスポット詳細（基本情報・営業時間・サービス・メニュー・メディア・スタッフ・クーポン・最寄り駅）
+- `/admin/spots` で管理画面（スポット CRUD・階層管理・スタッフ / クーポン / メディア / サービス / 最寄り駅管理）
+- `php artisan test` でテストを実行
 - Docker で `nginx`, `php`, `node`, `mysql`, `redis`, `mailpit`, `phpmyadmin` を起動
 
 ## クイックスタート
@@ -36,9 +39,9 @@ docker compose up -d --build nginx php mysql redis mailpit phpmyadmin
 3. PHP コンテナ内で初期化します。
 
 ```bash
-docker compose exec php composer install
-docker compose exec php php artisan key:generate
-docker compose exec php php artisan migrate
+docker exec php-plus1-community composer install
+docker exec php-plus1-community php artisan key:generate
+docker exec php-plus1-community php artisan migrate
 ```
 
 4. フロントエンドを開発モードで起動します。
@@ -83,10 +86,4 @@ php artisan test
 - 要件定義: `docs/portal-requirements.md`
 - 実装方針: `docs/implementation-outline.md`
 - データモデル案: `docs/data-model-draft.md`
-
-## 整備内容
-
-- Docker Compose の構文エラーを修正
-- `.env.example` を Docker でそのまま使える値に調整
-- `.gitignore`, `.editorconfig`, `.gitattributes` をスターター向けに再整備
-- `composer.json` のプロジェクトメタデータを Laravel 初期値から更新
+- 鉄道データ連携: `docs/railway-integration.md`

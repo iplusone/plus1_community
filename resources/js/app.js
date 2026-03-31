@@ -4,6 +4,7 @@ const bindSuggestions = () => {
     const bindings = [
         { inputId: 'genre-input', listId: 'genre-suggestions', url: '/suggestions/genres' },
         { inputId: 'tag-input', listId: 'tag-suggestions', url: '/suggestions/tags' },
+        { inputId: 'area-input', listId: 'area-suggestions', url: '/suggestions/area' },
     ];
 
     bindings.forEach(({ inputId, listId, url }) => {

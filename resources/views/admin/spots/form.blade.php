@@ -11,6 +11,10 @@
             </div>
         </div>
 
+        @if ($spot->exists)
+            @include('admin.spots.partials.sub-nav')
+        @endif
+
         @if (! empty($dbWarning))
             <div class="notice-panel compact">
                 <p>{{ $dbWarning }}</p>
@@ -105,6 +109,21 @@
                 <label>
                     <span>表示順</span>
                     <input type="number" name="sort_order" value="{{ old('sort_order', $spot->sort_order ?? 0) }}" min="0">
+                </label>
+            </div>
+
+            <div class="form-grid">
+                <label>
+                    <span>緯度</span>
+                    <input type="number" name="latitude" step="0.000001"
+                           value="{{ old('latitude', $spot->latitude) }}"
+                           placeholder="例: 35.658581">
+                </label>
+                <label>
+                    <span>経度</span>
+                    <input type="number" name="longitude" step="0.000001"
+                           value="{{ old('longitude', $spot->longitude) }}"
+                           placeholder="例: 139.745433">
                 </label>
             </div>
 

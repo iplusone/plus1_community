@@ -84,8 +84,9 @@
 
 - `parent_id` により自己参照
 - `depth` は検索や表示制御を簡単にするため冗長保持
-- `slug` は詳細ページ URL 用
-- すべての拠点(スポット)は 1 企業に属する
+- `slug` は詳細ページ URL 用（重複時は自動でカウンターを付加）
+- `company_id` は実装済み
+- `latitude` / `longitude` により最寄り駅の自動算出に対応
 
 ### `companies`
 
@@ -435,30 +436,51 @@ PV 集計の元データ。
 - `spots` 1:1 `spot_wordpress_sites`
 - `spots` 1:1 `spot_search_documents`
 
-## 5. migration 作成の優先順
+## 5. migration 実装状況
 
-1. `spots`
-2. `spot_admins`
-3. `regions`
-4. `genres`
-5. `tags`
-6. `spot_genres`
-7. `spot_tags`
-8. `spot_media`
-9. `spot_staff`
-10. `spot_coupons`
-11. `spot_services`
-12. `spot_menus`
-13. `spot_wordpress_sites`
-14. `spot_featured_slots`
-15. `spot_page_views`
-16. `spot_search_documents`
+以下は 2026-03-31 時点の実装状況。
+
+| テーブル | 状況 |
+|---------|------|
+| `spots` | ✅ 実装済み |
+| `spot_admins` | ✅ 実装済み |
+| `regions` | ✅ 実装済み（検索 UI での利用は未実装） |
+| `genres` | ✅ 実装済み |
+| `tags` | ✅ 実装済み |
+| `spot_genres` | ✅ 実装済み |
+| `spot_tags` | ✅ 実装済み |
+| `spot_business_hours` | ✅ 実装済み |
+| `spot_services` | ✅ 実装済み |
+| `spot_menus` | ✅ 実装済み |
+| `spot_media` | ✅ 実装済み |
+| `spot_staff` | ✅ 実装済み |
+| `spot_coupons` | ✅ 実装済み |
+| `spot_wordpress_sites` | ✅ 実装済み（API 連携は未実装） |
+| `spot_featured_slots` | ✅ 実装済み |
+| `spot_page_views` | ✅ 実装済み（集計ロジックは未実装） |
+| `spot_search_documents` | ✅ 実装済み（SpotObserver で同期） |
+| `companies` | ✅ 実装済み |
+| `company_registrations` | ❌ 未実装 |
+| `company_user_invitations` | ❌ 未実装 |
+| `stations` | ✅ 実装済み |
+| `railway_routes` | ✅ 実装済み |
+| `railway_route_station` | ✅ 実装済み |
+| `station_near_stations` | ✅ 実装済み |
+| `spot_stations` | ✅ 実装済み |
+
+### 実装済みとドラフトの主な差分
+
+- `users.company_id` / `users.created_by_user_id` は実装済み
+- `spots.company_id` は実装済み
+- `spot_menus` の外部キー名は `spot_service_id`（ドラフトの `service_id` と相違）
+- エリア検索は `regions` ではなく、現状は文字列 + 駅 + 路線の統合検索
+- 鉄道検索は文字列ベースで運用中で、将来インデックス最適化を想定
+- `users` への `display_name` / `is_active` 追加は未実施
 
 ## 6. 未確定事項
 
-- 管理者権限をロール名で持つか、可視範囲で持つか
 - 企業登録申請と `companies` の責務分離をどこまで厳密にするか
-- 地域を完全マスタ化するか、拠点に文字列も持たせるか
-- タグサジェストの正規化ルール
+- 管理者権限をロール名で持つか、可視範囲で持つか（spot_admins.role_scope の定義）
+- 地域を完全マスタ化するか、拠点に文字列も持たせるか（現状は文字列のみ）
 - WordPress 記事を都度取得するか、ローカル同期するか
-- 検索インデックスを同期更新にするか、キュー更新にするか
+- 検索インデックス（spot_search_documents）の同期方式（イベント駆動 vs キュー駆動）

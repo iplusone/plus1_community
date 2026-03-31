@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Spot;
+use App\Observers\SpotObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +21,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Spot::observe(SpotObserver::class);
     }
 }

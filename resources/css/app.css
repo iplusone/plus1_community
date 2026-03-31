@@ -788,6 +788,74 @@
         margin-top: 1rem;
     }
 
+    .admin-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .admin-tabs a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.5rem;
+        padding: 0.45rem 1rem;
+        border: 1px solid var(--line);
+        border-radius: 0.9rem 0.9rem 0.35rem 0.35rem;
+        background: rgba(227, 213, 188, 0.7);
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: background-color 180ms ease, color 180ms ease;
+    }
+
+    .admin-tabs a.is-active {
+        background: var(--panel-strong);
+        border-color: var(--accent);
+        color: var(--accent-deep);
+    }
+
+    .station-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .station-list__item {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.9rem;
+    }
+
+    .station-list__item > a {
+        color: var(--accent-deep);
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .station-list__routes {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .station-list__routes a {
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .station-list__walk {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
     .result-meta {
         margin-bottom: 1rem;
         color: var(--muted);
