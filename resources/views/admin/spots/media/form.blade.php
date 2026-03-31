@@ -35,9 +35,10 @@
             @if ($mediaType === 'image')
                 <div class="media-upload" id="image-dropzone" tabindex="0" role="button" aria-label="画像をドラッグ&ドロップまたは選択">
                     <input type="file" name="{{ $item->exists ? 'uploaded_image' : 'uploaded_images[]' }}" id="uploaded-image-input" accept="image/*" @if (! $item->exists) multiple @endif hidden>
+                    <div class="media-upload__icon" aria-hidden="true">+</div>
                     <div class="media-upload__copy">
-                        <strong>{{ $item->exists ? '画像をドラッグ&ドロップ' : '画像をまとめてドラッグ&ドロップ' }}</strong>
-                        <span>{{ $item->exists ? 'またはクリックして画像を選択' : 'またはクリックして複数画像を選択' }}</span>
+                        <strong>ここに画像をドラッグ&ドロップ</strong>
+                        <span>{{ $item->exists ? 'またはクリックして画像を1枚選択' : 'またはクリックして複数画像を選択' }}</span>
                         <small>JPG / PNG / WebP / GIF, 5MBまで</small>
                     </div>
                     <div class="media-upload__preview-grid" id="image-preview" @style([! $item->thumbnailUrl() ? 'display:none' : null])>
@@ -47,16 +48,20 @@
                     </div>
                 </div>
 
-                <label>
-                    <span>画像URL / ストレージパス</span>
-                    <input type="text" name="path" id="image-path-input" value="{{ old('path', $item->path) }}">
-                    <small>{{ $item->exists ? 'アップロードの代わりにURLや既存ストレージパスを指定することもできます。' : '一括アップロードしない場合だけ、1件分のURLや既存ストレージパスを指定できます。' }}</small>
-                </label>
+                <details class="media-advanced">
+                    <summary>URLや既存パスを手入力する場合</summary>
 
-                <label>
-                    <span>サムネイルパス</span>
-                    <input type="text" name="thumbnail_path" value="{{ old('thumbnail_path', $item->thumbnail_path) }}">
-                </label>
+                    <label>
+                        <span>画像URL / ストレージパス</span>
+                        <input type="text" name="path" id="image-path-input" value="{{ old('path', $item->path) }}">
+                        <small>{{ $item->exists ? 'アップロードの代わりにURLや既存ストレージパスを指定することもできます。' : '一括アップロードしない場合だけ、1件分のURLや既存ストレージパスを指定できます。' }}</small>
+                    </label>
+
+                    <label>
+                        <span>サムネイルパス</span>
+                        <input type="text" name="thumbnail_path" value="{{ old('thumbnail_path', $item->thumbnail_path) }}">
+                    </label>
+                </details>
             @else
                 <label>
                     <span>YouTube埋め込みタグ</span>
