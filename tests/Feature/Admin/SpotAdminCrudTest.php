@@ -124,7 +124,7 @@ class SpotAdminCrudTest extends TestCase
             'caption' => '紹介動画',
         ]);
 
-        $response->assertRedirect(route('admin.spots.media.index', $spot));
+        $response->assertRedirect(route('admin.spots.media.index', ['spot' => $spot, 'type' => 'video']));
 
         $this->assertDatabaseHas(SpotMedia::class, [
             'spot_id' => $spot->id,
@@ -194,7 +194,7 @@ class SpotAdminCrudTest extends TestCase
             'uploaded_image' => UploadedFile::fake()->image('spot.jpg', 1200, 800),
         ]);
 
-        $response->assertRedirect(route('admin.spots.media.index', $spot));
+        $response->assertRedirect(route('admin.spots.media.index', ['spot' => $spot, 'type' => 'image']));
 
         $media = SpotMedia::query()->where('spot_id', $spot->id)->firstOrFail();
 
@@ -203,5 +203,23 @@ class SpotAdminCrudTest extends TestCase
         $this->assertNotNull($media->path);
         $this->assertSame($media->path, $media->thumbnail_path);
         Storage::disk('public')->assertExists($media->path);
+    }
+
+    public function test_multiple_images_can_be_uploaded_from_admin_screen(): void
+    {
+        Storage::fake('public');
+
+        $spot = $this->createSpot(['slug' => 'multi-image-upload-spot']);
+
+        $response = $this->post(route('admin.spots.media.store', $spot), [
+            'type' => 'image',
+            'uploaded_images' => [
+                UploadedFile::fake()->image('spot-1.jpg', 1200, 800),
+                UploadedFile::fake()->image('spot-2.jpg', 1200, 800),
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.spots.media.index', ['spot' => $spot, 'type' => 'image']));
+        $this->assertSame(2, $spot->media()->where('type', 'image')->count());
     }
 }

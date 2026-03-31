@@ -52,88 +52,79 @@ const bindSuggestions = () => {
 bindSuggestions();
 
 const bindMediaUpload = () => {
-    const typeSelect = document.getElementById('media-type-select');
     const fileInput = document.getElementById('uploaded-image-input');
     const dropzone = document.getElementById('image-dropzone');
     const preview = document.getElementById('image-preview');
 
-    if (!(typeSelect instanceof HTMLSelectElement)) {
+    if (!(dropzone instanceof HTMLElement) || !(fileInput instanceof HTMLInputElement)) {
         return;
     }
 
-    const panels = Array.from(document.querySelectorAll('[data-media-mode]'));
-
-    const syncMode = () => {
-        panels.forEach((panel) => {
-            if (!(panel instanceof HTMLElement)) {
-                return;
-            }
-
-            panel.style.display = panel.dataset.mediaMode === typeSelect.value ? '' : 'none';
-        });
-    };
-
-    const renderPreview = (file) => {
+    const renderPreview = (files) => {
         if (!(preview instanceof HTMLElement)) {
             return;
         }
 
-        if (!(file instanceof File)) {
+        const items = Array.from(files ?? []).filter((file) => file instanceof File);
+
+        if (items.length < 1) {
             preview.innerHTML = '';
             preview.style.display = 'none';
             return;
         }
 
-        const imageUrl = URL.createObjectURL(file);
-        preview.innerHTML = `<img src="${imageUrl}" alt="選択画像プレビュー">`;
+        preview.innerHTML = items
+            .map((file) => `<img src="${URL.createObjectURL(file)}" alt="選択画像プレビュー">`)
+            .join('');
         preview.style.display = '';
     };
 
-    if (fileInput instanceof HTMLInputElement) {
-        fileInput.addEventListener('change', () => {
-            renderPreview(fileInput.files?.[0] ?? null);
+    fileInput.addEventListener('change', () => {
+        renderPreview(fileInput.files);
+    });
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            fileInput.click();
+        }
+    });
+
+    ['dragenter', 'dragover'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            dropzone.classList.add('is-dragover');
         });
-    }
+    });
 
-    if (dropzone instanceof HTMLElement && fileInput instanceof HTMLInputElement) {
-        dropzone.addEventListener('click', () => fileInput.click());
-        dropzone.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                fileInput.click();
-            }
+    ['dragleave', 'drop'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            dropzone.classList.remove('is-dragover');
         });
+    });
 
-        ['dragenter', 'dragover'].forEach((eventName) => {
-            dropzone.addEventListener(eventName, (event) => {
-                event.preventDefault();
-                dropzone.classList.add('is-dragover');
-            });
-        });
+    dropzone.addEventListener('drop', (event) => {
+        const files = event.dataTransfer?.files;
 
-        ['dragleave', 'drop'].forEach((eventName) => {
-            dropzone.addEventListener(eventName, (event) => {
-                event.preventDefault();
-                dropzone.classList.remove('is-dragover');
-            });
-        });
+        if (!files || files.length < 1) {
+            return;
+        }
 
-        dropzone.addEventListener('drop', (event) => {
-            const file = event.dataTransfer?.files?.[0];
+        const transfer = new DataTransfer();
 
-            if (!file) {
-                return;
-            }
-
-            const transfer = new DataTransfer();
+        Array.from(files).forEach((file) => {
             transfer.items.add(file);
-            fileInput.files = transfer.files;
-            renderPreview(file);
         });
-    }
 
-    typeSelect.addEventListener('change', syncMode);
-    syncMode();
+        fileInput.files = transfer.files;
+        renderPreview(transfer.files);
+    });
+
+    if (fileInput.files?.length) {
+        renderPreview(fileInput.files);
+    }
 };
 
 bindMediaUpload();

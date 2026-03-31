@@ -6,15 +6,22 @@
     <section class="section-block">
         @include('admin.spots.partials.sub-nav')
 
+        <div class="admin-tabs">
+            <a href="{{ route('admin.spots.media.index', ['spot' => $spot, 'type' => 'image']) }}"
+               @class(['is-active' => $mediaType === 'image'])>画像</a>
+            <a href="{{ route('admin.spots.media.index', ['spot' => $spot, 'type' => 'video']) }}"
+               @class(['is-active' => $mediaType === 'video'])>動画</a>
+        </div>
+
         <div class="section-heading">
             <div>
                 <p class="eyebrow">Admin</p>
-                <h1>{{ $item->exists ? 'メディア編集' : 'メディア追加' }}</h1>
+                <h1>{{ $item->exists ? ($mediaType === 'image' ? '画像編集' : '動画編集') : ($mediaType === 'image' ? '画像追加' : '動画追加') }}</h1>
             </div>
         </div>
 
         <div class="notice-panel compact">
-            <p>画像は10枚まで、動画はYouTubeの埋め込みタグで5件まで登録できます。</p>
+            <p>{{ $mediaType === 'image' ? '画像は10枚まで登録できます。' : '動画はYouTubeの埋め込みタグで5件まで登録できます。' }}</p>
         </div>
 
         <form method="POST" action="{{ $formAction }}" class="form-card" enctype="multipart/form-data">
@@ -23,27 +30,17 @@
                 @method($formMethod)
             @endif
 
-            @php
-                $currentType = old('type', $item->type ?: 'image');
-            @endphp
+            <input type="hidden" name="type" value="{{ $mediaType }}">
 
-            <label>
-                <span>種別</span>
-                <select name="type" id="media-type-select">
-                    <option value="image" @selected($currentType === 'image')>画像</option>
-                    <option value="video" @selected($currentType === 'video')>動画</option>
-                </select>
-            </label>
-
-            <div class="media-mode-panel" data-media-mode="image" @style([$currentType !== 'image' ? 'display:none' : null])>
+            @if ($mediaType === 'image')
                 <div class="media-upload" id="image-dropzone" tabindex="0" role="button" aria-label="画像をドラッグ&ドロップまたは選択">
-                    <input type="file" name="uploaded_image" id="uploaded-image-input" accept="image/*" hidden>
+                    <input type="file" name="{{ $item->exists ? 'uploaded_image' : 'uploaded_images[]' }}" id="uploaded-image-input" accept="image/*" @if (! $item->exists) multiple @endif hidden>
                     <div class="media-upload__copy">
-                        <strong>画像をドラッグ&ドロップ</strong>
-                        <span>またはクリックして画像を選択</span>
+                        <strong>{{ $item->exists ? '画像をドラッグ&ドロップ' : '画像をまとめてドラッグ&ドロップ' }}</strong>
+                        <span>{{ $item->exists ? 'またはクリックして画像を選択' : 'またはクリックして複数画像を選択' }}</span>
                         <small>JPG / PNG / WebP / GIF, 5MBまで</small>
                     </div>
-                    <div class="media-upload__preview" id="image-preview" @style([! $item->thumbnailUrl() ? 'display:none' : null])>
+                    <div class="media-upload__preview-grid" id="image-preview" @style([! $item->thumbnailUrl() ? 'display:none' : null])>
                         @if ($item->thumbnailUrl())
                             <img src="{{ $item->thumbnailUrl() }}" alt="{{ $item->caption ?: $spot->name }}">
                         @endif
@@ -52,23 +49,21 @@
 
                 <label>
                     <span>画像URL / ストレージパス</span>
-                    <input type="text" name="path" id="image-path-input" value="{{ old('path', $currentType === 'image' ? $item->path : '') }}">
-                    <small>アップロードの代わりにURLや既存ストレージパスを指定することもできます。</small>
+                    <input type="text" name="path" id="image-path-input" value="{{ old('path', $item->path) }}">
+                    <small>{{ $item->exists ? 'アップロードの代わりにURLや既存ストレージパスを指定することもできます。' : '一括アップロードしない場合だけ、1件分のURLや既存ストレージパスを指定できます。' }}</small>
                 </label>
 
                 <label>
                     <span>サムネイルパス</span>
-                    <input type="text" name="thumbnail_path" value="{{ old('thumbnail_path', $currentType === 'image' ? $item->thumbnail_path : '') }}">
+                    <input type="text" name="thumbnail_path" value="{{ old('thumbnail_path', $item->thumbnail_path) }}">
                 </label>
-            </div>
-
-            <div class="media-mode-panel" data-media-mode="video" @style([$currentType !== 'video' ? 'display:none' : null])>
+            @else
                 <label>
                     <span>YouTube埋め込みタグ</span>
-                    <textarea name="path" rows="5" placeholder='<iframe src="https://www.youtube.com/embed/..."></iframe>'>{{ old('path', $currentType === 'video' ? $item->path : '') }}</textarea>
+                    <textarea name="path" rows="5" placeholder='<iframe src="https://www.youtube.com/embed/..."></iframe>'>{{ old('path', $item->path) }}</textarea>
                     <small>YouTubeの埋め込みタグをそのまま貼り付けてください。</small>
                 </label>
-            </div>
+            @endif
 
             <label>
                 <span>キャプション</span>
@@ -91,8 +86,8 @@
             @endif
 
             <div class="hero-actions">
-                <button type="submit" class="button-primary">{{ $item->exists ? '更新する' : '追加する' }}</button>
-                <a class="button-secondary" href="{{ route('admin.spots.media.index', $spot) }}">一覧へ戻る</a>
+                <button type="submit" class="button-primary">{{ $item->exists ? '更新する' : ($mediaType === 'image' ? '画像を追加する' : '動画を追加する') }}</button>
+                <a class="button-secondary" href="{{ route('admin.spots.media.index', ['spot' => $spot, 'type' => $mediaType]) }}">一覧へ戻る</a>
             </div>
         </form>
     </section>

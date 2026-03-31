@@ -6,17 +6,26 @@
     <section class="section-block">
         @include('admin.spots.partials.sub-nav')
 
+        <div class="admin-tabs">
+            <a href="{{ route('admin.spots.media.index', ['spot' => $spot, 'type' => 'image']) }}"
+               @class(['is-active' => $mediaType === 'image'])>画像</a>
+            <a href="{{ route('admin.spots.media.index', ['spot' => $spot, 'type' => 'video']) }}"
+               @class(['is-active' => $mediaType === 'video'])>動画</a>
+        </div>
+
         <div class="section-heading">
             <div>
                 <p class="eyebrow">Admin</p>
-                <h1>メディア管理</h1>
+                <h1>{{ $mediaType === 'image' ? '画像管理' : '動画管理' }}</h1>
             </div>
-            <a class="button-primary" href="{{ route('admin.spots.media.create', $spot) }}">メディア追加</a>
+            <a class="button-primary" href="{{ route('admin.spots.media.create', ['spot' => $spot, 'type' => $mediaType]) }}">
+                {{ $mediaType === 'image' ? '画像追加' : '動画追加' }}
+            </a>
         </div>
 
         <div class="active-filters">
-            <span>画像 {{ $media->where('type', 'image')->count() }} / 10</span>
-            <span>動画 {{ $media->where('type', 'video')->count() }} / 5</span>
+            <span>画像 {{ $allMedia->where('type', 'image')->count() }} / 10</span>
+            <span>動画 {{ $allMedia->where('type', 'video')->count() }} / 5</span>
         </div>
 
         <div class="table-card">
@@ -48,7 +57,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5">メディアはまだ登録されていません。</td>
+                            <td colspan="5">{{ $mediaType === 'image' ? '画像はまだ登録されていません。' : '動画はまだ登録されていません。' }}</td>
                         </tr>
                     @endforelse
                 </tbody>

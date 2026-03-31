@@ -622,18 +622,28 @@
         color: var(--muted);
     }
 
-    .media-upload__preview {
+    .media-upload__preview,
+    .media-upload__preview-grid {
         overflow: hidden;
         border-radius: 1rem;
         border: 1px solid var(--line);
         background: rgba(255, 255, 255, 0.76);
     }
 
-    .media-upload__preview img {
+    .media-upload__preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.75rem;
+        padding: 0.75rem;
+    }
+
+    .media-upload__preview img,
+    .media-upload__preview-grid img {
         display: block;
         width: 100%;
         max-height: 320px;
         object-fit: cover;
+        border-radius: 0.8rem;
     }
 
     .media-mode-panel {
