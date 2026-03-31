@@ -24,7 +24,7 @@ class HomeController extends Controller
         try {
             $baseQuery = Spot::query()
                 ->visible()
-                ->with(['genres', 'tags'])
+                ->with(['genres', 'tags', 'media'])
                 ->withCount('children');
 
             $sections['featuredSpots'] = SpotFeaturedSlot::query()
@@ -35,7 +35,7 @@ class HomeController extends Controller
                 ->where(function ($query) {
                     $query->whereNull('ends_at')->orWhere('ends_at', '>=', now());
                 })
-                ->with(['spot' => fn ($query) => $query->visible()->with(['genres', 'tags'])->withCount('children')])
+                ->with(['spot' => fn ($query) => $query->visible()->with(['genres', 'tags', 'media'])->withCount('children')])
                 ->orderBy('sort_order')
                 ->get();
             $sections['featuredSpots'] = $sections['featuredSpots']

@@ -24,7 +24,7 @@ class SpotController extends Controller
         try {
             $query = Spot::query()
                 ->visible()
-                ->with(['genres', 'tags'])
+                ->with(['genres', 'tags', 'media'])
                 ->withCount('children');
 
             $this->applyFilters($query, $request);
@@ -68,7 +68,7 @@ class SpotController extends Controller
 
             $relatedSpots = Spot::query()
                 ->visible()
-                ->with(['genres', 'tags'])
+                ->with(['genres', 'tags', 'media'])
                 ->withCount('children')
                 ->whereKeyNot($spot->id)
                 ->where(function (Builder $query) use ($spot) {

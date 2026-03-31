@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class Spot extends Model
 {
@@ -123,6 +124,40 @@ class Spot extends Model
         }
 
         return implode(' > ', $segments);
+    }
+
+    public function cardImageUrl(): ?string
+    {
+        $candidate = $this->thumbnail_path;
+
+        if (! $candidate) {
+            $candidate = $this->media
+                ->pluck('thumbnail_path')
+                ->filter()
+                ->first()
+                ?? $this->media
+                    ->pluck('path')
+                    ->filter()
+                    ->first();
+        }
+
+        if (! $candidate) {
+            return null;
+        }
+
+        if (Str::startsWith($candidate, ['http://', 'https://', 'data:'])) {
+            return $candidate;
+        }
+
+        if (Str::startsWith($candidate, ['/storage/', 'storage/'])) {
+            return Str::startsWith($candidate, '/')
+                ? $candidate
+                : '/'.$candidate;
+        }
+
+        $candidate = Str::replaceFirst('public/', '', ltrim($candidate, '/'));
+
+        return '/storage/'.$candidate;
     }
 
     public function admins(): BelongsToMany
