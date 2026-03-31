@@ -8,6 +8,8 @@ use App\Models\SpotMedia;
 use App\Models\SpotStaff;
 use App\Models\Station;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class SpotAdminCrudTest extends TestCase
@@ -178,5 +180,28 @@ class SpotAdminCrudTest extends TestCase
         $response->assertSessionHasErrors([
             'type' => '動画は5件まで登録できます。',
         ]);
+    }
+
+    public function test_image_can_be_uploaded_from_admin_screen(): void
+    {
+        Storage::fake('public');
+
+        $spot = $this->createSpot(['slug' => 'image-upload-spot']);
+
+        $response = $this->post(route('admin.spots.media.store', $spot), [
+            'type' => 'image',
+            'caption' => '外観写真',
+            'uploaded_image' => UploadedFile::fake()->image('spot.jpg', 1200, 800),
+        ]);
+
+        $response->assertRedirect(route('admin.spots.media.index', $spot));
+
+        $media = SpotMedia::query()->where('spot_id', $spot->id)->firstOrFail();
+
+        $this->assertSame('image', $media->type);
+        $this->assertSame('外観写真', $media->caption);
+        $this->assertNotNull($media->path);
+        $this->assertSame($media->path, $media->thumbnail_path);
+        Storage::disk('public')->assertExists($media->path);
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Spot;
 use App\Models\SpotMedia;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -75,16 +76,48 @@ class SpotMediaController extends Controller
     {
         $data = $request->validate([
             'type' => ['required', 'string', 'in:image,video'],
-            'path' => ['required', 'string', 'max:255'],
+            'path' => ['nullable', 'string', 'max:2000'],
             'thumbnail_path' => ['nullable', 'string', 'max:255'],
             'caption' => ['nullable', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'uploaded_image' => ['nullable', 'image', 'max:5120'],
         ]) + ['sort_order' => (int) $request->input('sort_order', 0)];
 
         if ($data['type'] === 'video') {
+            if (blank($data['path'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'path' => '動画はYouTubeの埋め込みタグを入力してください。',
+                ]);
+            }
+
             $data['path'] = $this->normalizeYoutubeEmbed($data['path']);
             $data['thumbnail_path'] = null;
+
+            return $this->stripUploadOnlyFields($data);
         }
+
+        if ($request->file('uploaded_image') instanceof UploadedFile) {
+            $storedPath = $request->file('uploaded_image')->store('spot-media', 'public');
+            $data['path'] = $storedPath;
+            $data['thumbnail_path'] = $storedPath;
+        }
+
+        if (blank($data['path'] ?? null)) {
+            throw ValidationException::withMessages([
+                'uploaded_image' => '画像ファイルを追加するか、画像URLを入力してください。',
+            ]);
+        }
+
+        return $this->stripUploadOnlyFields($data);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private function stripUploadOnlyFields(array $data): array
+    {
+        unset($data['uploaded_image']);
 
         return $data;
     }
