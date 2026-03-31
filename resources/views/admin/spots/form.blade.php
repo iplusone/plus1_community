@@ -29,7 +29,7 @@
                     <option value="">なし</option>
                     @foreach ($parents as $parent)
                         <option value="{{ $parent->id }}" @selected(old('parent_id', $spot->parent_id) == $parent->id)>
-                            {{ $parent->name }}
+                            {{ $parent->hierarchyLabel() }}（第{{ $parent->depth }}階層）
                         </option>
                     @endforeach
                 </select>

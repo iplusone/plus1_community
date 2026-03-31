@@ -1,7 +1,9 @@
+name: plus1_community
+
 services:
   nginx:
     image: nginx:1.27-alpine
-    container_name: nginx-ec-plus1
+    container_name: nginx-plus1-community
     ports:
       - "8021:80" # http://localhost:8021
     depends_on:
@@ -14,7 +16,7 @@ services:
   php:
     build:
       context: ./docker/php
-    container_name: laravel12-ec-plus1
+    container_name: php-plus1-community
     environment:
       TZ: Asia/Tokyo
     volumes:
@@ -25,7 +27,7 @@ services:
 
   node:
     image: node:20-alpine
-    container_name: node-ec-plus1
+    container_name: node-plus1-community
     working_dir: /var/www/html
     command: sh -c "npm install && npm run dev"
     ports:
@@ -36,7 +38,7 @@ services:
 
   mysql:
     image: mysql:8.4
-    container_name: mysql-ec-plus1
+    container_name: mysql-plus1-community
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: laravel
@@ -51,14 +53,14 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis-ec-plus1
+    container_name: redis-plus1-community
     ports:
       - "16380:6379"
     networks: [ appnet ]
 
   mailpit:
     image: axllent/mailpit:latest
-    container_name: mailpit-ec-plus1
+    container_name: mailpit-plus1-community
     ports:
       - "8035:8025" # UI
       - "1035:1025" # SMTP
@@ -66,7 +68,7 @@ services:
 
   phpmyadmin:
     image: phpmyadmin:5-apache
-    container_name: phpmyadmin-ec-plus1
+    container_name: phpmyadmin-plus1-community
     environment:
       PMA_HOST: mysql
       PMA_USER: laravel
@@ -79,8 +81,10 @@ services:
 
 volumes:
   dbdata:
+    name: plus1_community_dbdata
 
 
 networks:
   appnet:
+    name: plus1_community_appnet
     driver: bridge

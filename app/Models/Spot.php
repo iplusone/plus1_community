@@ -18,6 +18,7 @@ class Spot extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'company_id',
         'parent_id',
         'depth',
         'name',
@@ -70,9 +71,54 @@ class Spot extends Model
         return $this->belongsTo(self::class, 'parent_id');
     }
 
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function descendantIds(): array
+    {
+        $descendantIds = [];
+        $pendingIds = [$this->id];
+
+        while ($pendingIds !== []) {
+            $childIds = self::query()
+                ->whereIn('parent_id', $pendingIds)
+                ->pluck('id')
+                ->all();
+
+            if ($childIds === []) {
+                break;
+            }
+
+            $descendantIds = [...$descendantIds, ...$childIds];
+            $pendingIds = $childIds;
+        }
+
+        return array_values(array_unique($descendantIds));
+    }
+
+    public function hierarchyLabel(): string
+    {
+        $segments = [$this->name];
+        $current = $this->parent;
+        $guard = 0;
+
+        while ($current && $guard < 5) {
+            array_unshift($segments, $current->name);
+            $current = $current->parent;
+            $guard++;
+        }
+
+        return implode(' > ', $segments);
     }
 
     public function admins(): BelongsToMany
