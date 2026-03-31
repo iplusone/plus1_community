@@ -206,16 +206,14 @@ class SpotController extends Controller
         $query = Spot::query();
         $user = $this->currentUser();
 
-        if (! $user?->company_id) {
-            return $query;
-        }
+        if ($user?->company_id) {
+            $query->where('company_id', $user->company_id);
 
-        $query->where('company_id', $user->company_id);
+            $manageableIds = $user->manageableSpotIds();
 
-        $manageableIds = $user->manageableSpotIds();
-
-        if ($manageableIds !== []) {
-            $query->whereIn('id', $manageableIds);
+            if ($manageableIds !== []) {
+                $query->whereIn('id', $manageableIds);
+            }
         }
 
         $name = trim((string) $request->string('name'));
