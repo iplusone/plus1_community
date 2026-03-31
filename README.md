@@ -87,3 +87,4 @@ php artisan test
 - 実装方針: `docs/implementation-outline.md`
 - データモデル案: `docs/data-model-draft.md`
 - 鉄道データ連携: `docs/railway-integration.md`
+- VPS デプロイ手順: `docs/vps-apache-deployment.md`
