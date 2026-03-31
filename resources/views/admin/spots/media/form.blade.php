@@ -13,6 +13,10 @@
             </div>
         </div>
 
+        <div class="notice-panel compact">
+            <p>画像は10枚まで、動画はYouTubeの埋め込みタグで5件まで登録できます。</p>
+        </div>
+
         <form method="POST" action="{{ $formAction }}" class="form-card">
             @csrf
             @if ($formMethod !== 'POST')
@@ -28,13 +32,14 @@
             </label>
 
             <label>
-                <span>パス（URL またはストレージパス）</span>
+                <span>画像URL / ストレージパス / YouTube埋め込みタグ</span>
                 <input type="text" name="path" value="{{ old('path', $item->path) }}" required>
             </label>
 
             <label>
                 <span>サムネイルパス</span>
                 <input type="text" name="thumbnail_path" value="{{ old('thumbnail_path', $item->thumbnail_path) }}">
+                <small>動画の場合は未使用です。</small>
             </label>
 
             <label>

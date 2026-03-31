@@ -178,14 +178,45 @@
             <article id="photos" class="content-card section-anchor">
                 <h2>写真</h2>
                 <div class="photo-grid">
-                    @forelse ($spot->media as $media)
+                    @forelse ($spot->media->where('type', 'image') as $media)
                         <div class="photo-tile">
-                            <div class="photo-tile__visual">{{ strtoupper($media->type) }}</div>
+                            <div class="photo-tile__visual">
+                                @if ($media->thumbnailUrl())
+                                    <img src="{{ $media->thumbnailUrl() }}" alt="{{ $media->caption ?: $spot->name }}" loading="lazy">
+                                @else
+                                    IMAGE
+                                @endif
+                            </div>
                             <strong>{{ $media->caption ?: 'キャプション未設定' }}</strong>
-                            <p>{{ $media->path }}</p>
+                            @if ($media->assetUrl())
+                                <a href="{{ $media->assetUrl() }}" target="_blank" rel="noreferrer">画像を開く</a>
+                            @endif
                         </div>
                     @empty
                         <div class="empty-panel compact">写真はまだ登録されていません。</div>
+                    @endforelse
+                </div>
+            </article>
+
+            <article class="content-card section-anchor">
+                <h2>動画</h2>
+                <div class="photo-grid">
+                    @forelse ($spot->media->where('type', 'video') as $media)
+                        <div class="photo-tile">
+                            <div class="video-embed">
+                                <iframe
+                                    src="{{ $media->youtubeEmbedUrl() }}"
+                                    title="{{ $media->caption ?: $spot->name . ' の動画' }}"
+                                    loading="lazy"
+                                    referrerpolicy="strict-origin-when-cross-origin"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowfullscreen
+                                ></iframe>
+                            </div>
+                            <strong>{{ $media->caption ?: '動画' }}</strong>
+                        </div>
+                    @empty
+                        <div class="empty-panel compact">動画はまだ登録されていません。</div>
                     @endforelse
                 </div>
             </article>

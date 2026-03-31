@@ -14,6 +14,11 @@
             <a class="button-primary" href="{{ route('admin.spots.media.create', $spot) }}">メディア追加</a>
         </div>
 
+        <div class="active-filters">
+            <span>画像 {{ $media->where('type', 'image')->count() }} / 10</span>
+            <span>動画 {{ $media->where('type', 'video')->count() }} / 5</span>
+        </div>
+
         <div class="table-card">
             <table>
                 <thead>

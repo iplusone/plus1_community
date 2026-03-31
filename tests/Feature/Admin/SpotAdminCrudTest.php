@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Spot;
 use App\Models\SpotCoupon;
+use App\Models\SpotMedia;
 use App\Models\SpotStaff;
 use App\Models\Station;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -108,6 +109,74 @@ class SpotAdminCrudTest extends TestCase
         $response->assertRedirect(route('admin.spots.stations.index', $spot));
         $response->assertSessionHasErrors([
             'recalculate' => '緯度・経度が未設定です。先にスポット基本情報で位置情報を入力してください。',
+        ]);
+    }
+
+    public function test_video_store_normalizes_youtube_embed_tag(): void
+    {
+        $spot = $this->createSpot(['slug' => 'media-test-spot']);
+
+        $response = $this->post(route('admin.spots.media.store', $spot), [
+            'type' => 'video',
+            'path' => '<iframe width="560" height="315" src="https://www.youtube.com/embed/abc123XYZ90" title="YouTube video player"></iframe>',
+            'caption' => '紹介動画',
+        ]);
+
+        $response->assertRedirect(route('admin.spots.media.index', $spot));
+
+        $this->assertDatabaseHas(SpotMedia::class, [
+            'spot_id' => $spot->id,
+            'type' => 'video',
+            'path' => 'https://www.youtube.com/embed/abc123XYZ90',
+            'caption' => '紹介動画',
+        ]);
+    }
+
+    public function test_image_limit_is_ten_items(): void
+    {
+        $spot = $this->createSpot(['slug' => 'image-limit-spot']);
+
+        $spot->media()->createMany(collect(range(1, 10))->map(fn (int $index) => [
+            'spot_id' => $spot->id,
+            'type' => 'image',
+            'path' => "storage/media/sample-{$index}.jpg",
+            'caption' => "画像{$index}",
+            'sort_order' => $index,
+        ])->all());
+
+        $response = $this->from(route('admin.spots.media.index', $spot))
+            ->post(route('admin.spots.media.store', $spot), [
+                'type' => 'image',
+                'path' => 'storage/media/overflow.jpg',
+            ]);
+
+        $response->assertRedirect(route('admin.spots.media.index', $spot));
+        $response->assertSessionHasErrors([
+            'type' => '画像は10枚まで登録できます。',
+        ]);
+    }
+
+    public function test_video_limit_is_five_items(): void
+    {
+        $spot = $this->createSpot(['slug' => 'video-limit-spot']);
+
+        $spot->media()->createMany(collect(range(1, 5))->map(fn (int $index) => [
+            'spot_id' => $spot->id,
+            'type' => 'video',
+            'path' => "https://www.youtube.com/embed/video{$index}",
+            'caption' => "動画{$index}",
+            'sort_order' => $index,
+        ])->all());
+
+        $response = $this->from(route('admin.spots.media.index', $spot))
+            ->post(route('admin.spots.media.store', $spot), [
+                'type' => 'video',
+                'path' => '<iframe src="https://www.youtube.com/embed/overflow001"></iframe>',
+            ]);
+
+        $response->assertRedirect(route('admin.spots.media.index', $spot));
+        $response->assertSessionHasErrors([
+            'type' => '動画は5件まで登録できます。',
         ]);
     }
 }
