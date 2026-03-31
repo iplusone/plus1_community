@@ -3,7 +3,7 @@
         <span>{{ strtoupper(mb_substr($spot->name, 0, 1)) }}</span>
     </div>
     <div class="spot-card__body">
-        <p class="eyebrow">Base</p>
+        <p class="eyebrow">Spot</p>
         <h3>{{ $spot->name }}</h3>
         <p>{{ trim(collect([$spot->prefecture, $spot->city, $spot->town])->filter()->join(' ')) ?: '住所未設定' }}</p>
         @if ($spot->description)

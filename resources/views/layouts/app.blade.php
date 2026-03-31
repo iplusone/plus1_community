@@ -21,7 +21,6 @@
             <nav class="site-nav">
                 <a href="{{ route('home') }}">トップ</a>
                 <a href="{{ route('spots.index') }}">スポット検索</a>
-                <a href="{{ route('admin.spots.index') }}">スポット管理</a>
             </nav>
         </header>
 

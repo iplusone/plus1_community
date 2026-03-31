@@ -4,7 +4,7 @@
     </div>
     <div class="list-item__body">
         <div>
-            <p class="eyebrow">Base</p>
+            <p class="eyebrow">Spot</p>
             <h3>{{ $spot->name }}</h3>
             <p>{{ trim(collect([$spot->prefecture, $spot->city, $spot->town, $spot->address_line])->filter()->join(' ')) ?: '住所未設定' }}</p>
             @if ($spot->description)

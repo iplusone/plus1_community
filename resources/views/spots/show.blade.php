@@ -23,7 +23,7 @@
 
     <section class="spot-header">
         <div>
-            <p class="eyebrow">Base Detail</p>
+            <p class="eyebrow">Spot Detail</p>
             <h1>{{ $spot->name }}</h1>
             <p class="hero-copy">{{ $spot->description ?: 'この拠点(スポット)の紹介文はまだ登録されていません。' }}</p>
             <div class="chip-row">
@@ -93,10 +93,6 @@
                     <div class="info-table__row">
                         <span>特徴</span>
                         <strong>{{ $spot->features ?: '未設定' }}</strong>
-                    </div>
-                    <div class="info-table__row">
-                        <span>スラッグ</span>
-                        <strong>{{ $spot->slug }}</strong>
                     </div>
                 </div>
             </article>
@@ -176,7 +172,7 @@
 
             <article id="news-blog" class="content-card section-anchor">
                 <h2>ニュース&ブログ</h2>
-                <div class="empty-panel compact">この拠点(スポット)のニュース&ブログは準備中です。</div>
+                <div class="empty-panel compact">最新のお知らせや読みものは、今後このページに追加予定です。</div>
             </article>
 
             <article id="photos" class="content-card section-anchor">
@@ -259,7 +255,7 @@
                         <span>URL</span>
                         <strong>
                             @if ($spot->wordpressSite)
-                                <a href="{{ $spot->wordpressSite->base_url }}" target="_blank" rel="noreferrer">拠点HP</a>
+                                <a href="{{ $spot->wordpressSite->base_url }}" target="_blank" rel="noreferrer">公式サイト</a>
                             @else
                                 未設定
                             @endif

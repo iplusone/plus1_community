@@ -12,7 +12,7 @@
             </p>
             <div class="hero-actions">
                 <a class="button-primary" href="{{ route('spots.index') }}">拠点を探す</a>
-                <a class="button-secondary" href="{{ route('admin.spots.index') }}">管理画面へ</a>
+                <a class="button-secondary" href="{{ route('spots.index', ['sort' => 'latest']) }}">新着を見る</a>
             </div>
         </div>
 
