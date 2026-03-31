@@ -18,6 +18,30 @@
             </div>
         @endif
 
+        <form method="GET" action="{{ route('admin.spots.index') }}" class="search-panel">
+            <input type="text" name="name" value="{{ $filters['name'] ?? '' }}" placeholder="スポット名">
+            <input type="text" name="prefecture" value="{{ $filters['prefecture'] ?? '' }}" placeholder="都道府県">
+            <input type="text" name="city" value="{{ $filters['city'] ?? '' }}" placeholder="市区町村">
+            <select name="is_public">
+                <option value="">公開状態</option>
+                <option value="1" @selected(($filters['is_public'] ?? '') === '1')>公開</option>
+                <option value="0" @selected(($filters['is_public'] ?? '') === '0')>非公開</option>
+            </select>
+            <button type="submit" class="button-primary">検索</button>
+            <a href="{{ route('admin.spots.index') }}" class="button-secondary">クリア</a>
+        </form>
+
+        <div class="active-filters">
+            @foreach (['name' => 'スポット名', 'prefecture' => '都道府県', 'city' => '市区町村'] as $key => $label)
+                @if (! empty($filters[$key]))
+                    <span>{{ $label }}: {{ $filters[$key] }}</span>
+                @endif
+            @endforeach
+            @if (($filters['is_public'] ?? '') !== '')
+                <span>公開状態: {{ ($filters['is_public'] ?? '') === '1' ? '公開' : '非公開' }}</span>
+            @endif
+        </div>
+
         <div class="table-card">
             <table>
                 <thead>

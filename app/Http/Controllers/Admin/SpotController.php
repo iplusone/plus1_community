@@ -7,6 +7,7 @@ use App\Models\Spot;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -15,22 +16,27 @@ use Illuminate\Validation\ValidationException;
 
 class SpotController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         try {
-            $spots = $this->spotIndexQuery()
+            $spots = $this->spotIndexQuery($request)
                 ->with('parent')
                 ->orderBy('depth')
                 ->orderBy('sort_order')
                 ->orderBy('name')
-                ->paginate(20);
+                ->paginate(20)
+                ->withQueryString();
             $dbWarning = null;
         } catch (\Throwable $e) {
             $spots = new LengthAwarePaginator([], 0, 20);
             $dbWarning = 'データベース未初期化のため、スポット管理一覧はまだ空です。';
         }
 
-        return view('admin.spots.index', compact('spots', 'dbWarning'));
+        return view('admin.spots.index', [
+            'spots' => $spots,
+            'dbWarning' => $dbWarning,
+            'filters' => $request->only(['name', 'prefecture', 'city', 'is_public']),
+        ]);
     }
 
     public function create(): View
@@ -195,7 +201,7 @@ class SpotController extends Controller
         }
     }
 
-    private function spotIndexQuery()
+    private function spotIndexQuery(Request $request)
     {
         $query = Spot::query();
         $user = $this->currentUser();
@@ -210,6 +216,27 @@ class SpotController extends Controller
 
         if ($manageableIds !== []) {
             $query->whereIn('id', $manageableIds);
+        }
+
+        $name = trim((string) $request->string('name'));
+        $prefecture = trim((string) $request->string('prefecture'));
+        $city = trim((string) $request->string('city'));
+        $isPublic = $request->string('is_public')->value();
+
+        if ($name !== '') {
+            $query->where('name', 'like', "%{$name}%");
+        }
+
+        if ($prefecture !== '') {
+            $query->where('prefecture', 'like', "%{$prefecture}%");
+        }
+
+        if ($city !== '') {
+            $query->where('city', 'like', "%{$city}%");
+        }
+
+        if (in_array($isPublic, ['1', '0'], true)) {
+            $query->where('is_public', $isPublic === '1');
         }
 
         return $query;
