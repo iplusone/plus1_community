@@ -95,6 +95,15 @@
 
             <div class="form-grid">
                 <label>
+                    <span>最寄り駅の徒歩表示上限（分）</span>
+                    <input type="number" name="nearest_station_max_walking_minutes"
+                           value="{{ old('nearest_station_max_walking_minutes', $spot->nearest_station_max_walking_minutes ?? 30) }}"
+                           min="1" max="999">
+                </label>
+            </div>
+
+            <div class="form-grid">
+                <label>
                     <span>営業時間</span>
                     <input type="text" name="business_hours_text" value="{{ old('business_hours_text', $spot->business_hours_text) }}">
                 </label>

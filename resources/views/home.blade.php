@@ -38,6 +38,23 @@
     <section class="section-block">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Chiba First</p>
+                <h2>{{ $priorityPrefecture }}の注目スポット</h2>
+            </div>
+            <a href="{{ route('spots.index', ['area' => $priorityPrefecture]) }}">{{ $priorityPrefecture }}をもっと見る</a>
+        </div>
+        <div class="spot-grid">
+            @forelse ($prioritySpots as $spot)
+                @include('spots.partials.card', ['spot' => $spot])
+            @empty
+                <div class="empty-panel">{{ $priorityPrefecture }}の公開スポットはまだありません。</div>
+            @endforelse
+        </div>
+    </section>
+
+    <section class="section-block">
+        <div class="section-heading">
+            <div>
                 <p class="eyebrow">Featured</p>
                 <h2>おすすめ拠点</h2>
             </div>

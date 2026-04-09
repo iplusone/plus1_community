@@ -17,7 +17,12 @@ class NearestStationService
             return;
         }
 
-        $nearest = self::findNearest($spot->latitude, $spot->longitude, self::LIMIT);
+        $nearest = self::findNearest(
+            $spot->latitude,
+            $spot->longitude,
+            self::LIMIT,
+            PrefectureCodeResolver::resolve($spot->prefecture)
+        );
 
         DB::transaction(function () use ($spot, $nearest) {
             DB::table('spot_stations')->where('spot_id', $spot->id)->delete();
@@ -45,10 +50,11 @@ class NearestStationService
     /**
      * @return \Illuminate\Support\Collection<int, object>
      */
-    private static function findNearest(float $lat, float $lng, int $limit): \Illuminate\Support\Collection
+    private static function findNearest(float $lat, float $lng, int $limit, ?string $prefCode = null): \Illuminate\Support\Collection
     {
         return DB::table('stations')
             ->select('id', 'station_name', 'operator_name', 'line_name', 'latitude', 'longitude')
+            ->when($prefCode, fn ($query) => $query->where('pref_code', $prefCode))
             ->selectRaw(
                 '(6371 * acos(
                     cos(radians(?)) * cos(radians(latitude))

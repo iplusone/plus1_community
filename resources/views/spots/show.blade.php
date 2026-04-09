@@ -7,6 +7,11 @@
         $fullAddress = trim(collect([$spot->prefecture, $spot->city, $spot->town, $spot->address_line])->filter()->join(' '));
         $mapQuery = $fullAddress;
         $weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
+        $maxWalkingMinutes = $spot->nearest_station_max_walking_minutes ?? 30;
+        $visibleSpotStations = $spot->spotStations
+            ->filter(fn ($spotStation) => $spotStation->walking_minutes !== null && $spotStation->walking_minutes <= $maxWalkingMinutes)
+            ->sortBy('sort_order')
+            ->values();
     @endphp
 
     <section class="breadcrumbs">
@@ -117,17 +122,22 @@
                             <span>アクセス</span>
                             <strong>{{ $spot->access_text ?: 'アクセス説明は未設定です。' }}</strong>
                         </div>
-                        @if ($spot->spotStations->isNotEmpty())
+                        @if ($visibleSpotStations->isNotEmpty())
                             <div class="info-table__row">
                                 <span>最寄り駅</span>
                                 <div class="station-list">
-                                    @foreach ($spot->spotStations->sortBy('sort_order') as $spotStation)
-                                        @php $station = $spotStation->station; @endphp
+                                    @foreach ($visibleSpotStations as $spotStation)
+                                        @php
+                                            $station = $spotStation->station;
+                                            $stationRoutes = $station->railwayRoutes
+                                                ->unique(fn ($route) => ($route->line_name ?? '').'|'.($route->operator_name ?? ''))
+                                                ->values();
+                                        @endphp
                                         <div class="station-list__item">
                                             <a href="{{ route('spots.index', ['area' => '[駅] ' . $station->station_name]) }}">{{ $station->station_name }}駅</a>
-                                            @if ($station->railwayRoutes->isNotEmpty())
+                                            @if ($stationRoutes->isNotEmpty())
                                                 <span class="station-list__routes">
-                                                    @foreach ($station->railwayRoutes as $route)
+                                                    @foreach ($stationRoutes as $route)
                                                         <a href="{{ route('spots.index', ['area' => '[路線] ' . $route->line_name]) }}">{{ $route->line_name }}</a>
                                                     @endforeach
                                                 </span>
@@ -322,17 +332,22 @@
                 @endforelse
             </section>
 
-            @if ($spot->spotStations->isNotEmpty())
+            @if ($visibleSpotStations->isNotEmpty())
             <section class="sidebar-card">
                 <h2>最寄り駅</h2>
                 <div class="station-list">
-                    @foreach ($spot->spotStations->sortBy('sort_order') as $spotStation)
-                        @php $station = $spotStation->station; @endphp
+                    @foreach ($visibleSpotStations as $spotStation)
+                        @php
+                            $station = $spotStation->station;
+                            $stationRoutes = $station->railwayRoutes
+                                ->unique(fn ($route) => ($route->line_name ?? '').'|'.($route->operator_name ?? ''))
+                                ->values();
+                        @endphp
                         <div class="station-list__item">
                             <a href="{{ route('spots.index', ['area' => '[駅] ' . $station->station_name]) }}">{{ $station->station_name }}駅</a>
-                            @if ($station->railwayRoutes->isNotEmpty())
+                            @if ($stationRoutes->isNotEmpty())
                                 <span class="station-list__routes">
-                                    @foreach ($station->railwayRoutes as $route)
+                                    @foreach ($stationRoutes as $route)
                                         <a href="{{ route('spots.index', ['area' => '[路線] ' . $route->line_name]) }}">{{ $route->line_name }}</a>
                                     @endforeach
                                 </span>

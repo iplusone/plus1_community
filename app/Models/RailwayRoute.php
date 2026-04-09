@@ -17,8 +17,8 @@ class RailwayRoute extends Model
     public function stations(): BelongsToMany
     {
         return $this->belongsToMany(Station::class, 'railway_route_station', 'railway_route_id', 'station_id')
-            ->withPivot('order')
-            ->orderByPivot('order')
+            ->withPivot('pivot_order')
+            ->orderByPivot('pivot_order')
             ->withTimestamps();
     }
 }

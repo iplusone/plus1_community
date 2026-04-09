@@ -7,6 +7,7 @@ use App\Models\Spot;
 use App\Models\SpotStation;
 use App\Models\Station;
 use App\Services\NearestStationService;
+use App\Services\PrefectureCodeResolver;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,12 @@ class SpotStationController extends Controller
             'walking_minutes' => ['nullable', 'integer', 'min:1', 'max:999'],
         ]);
 
-        $station = Station::where('station_name', 'like', '%' . $data['station_name'] . '%')
+        $prefCode = PrefectureCodeResolver::resolve($spot->prefecture);
+
+        $station = Station::query()
+            ->where('station_name', 'like', '%' . $data['station_name'] . '%')
+            ->when($prefCode, fn ($query) => $query->orderByRaw('CASE WHEN pref_code = ? THEN 0 ELSE 1 END', [$prefCode]))
+            ->orderBy('station_name')
             ->first();
 
         if (! $station) {

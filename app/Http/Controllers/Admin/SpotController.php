@@ -118,6 +118,7 @@ class SpotController extends Controller
             'business_hours_text' => ['nullable', 'string'],
             'holiday_text' => ['nullable', 'string'],
             'thumbnail_path' => ['nullable', 'string', 'max:255'],
+            'nearest_station_max_walking_minutes' => ['nullable', 'integer', 'min:1', 'max:999'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'is_public' => ['nullable', 'boolean'],
@@ -125,6 +126,7 @@ class SpotController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]) + [
             'is_public' => $request->boolean('is_public'),
+            'nearest_station_max_walking_minutes' => (int) $request->input('nearest_station_max_walking_minutes', 30),
             'sort_order' => (int) $request->input('sort_order', 0),
         ];
     }

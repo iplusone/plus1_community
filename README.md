@@ -32,6 +32,7 @@
 - `/spots/{slug}` でスポット詳細（基本情報・営業時間・サービス・メニュー・画像ギャラリー・動画・スタッフ・クーポン・最寄り駅）
 - `/admin/spots` で管理画面（スポット CRUD・階層管理・スポット名 / 都道府県 / 市区町村 / 公開状態での絞り込み）
 - スポット単位でスタッフ / クーポン / メディア / サービス / 最寄り駅を管理
+- 最寄り駅はスポットごとに「徒歩何分まで表示するか」を管理画面で設定でき、既定値は `30` 分
 - メディア管理は画像・動画タブに分離
 - 画像はドラッグ&ドロップまたはファイル選択で登録可能。新規追加時は複数アップロード、編集時は1枚差し替えに対応（最大 10 件、URL / ストレージパス手入力にも対応）
 - スポットカードの画像は、`spots.thumbnail_path` を優先し、未設定時は登録済みメディア画像の `thumbnail_path` または `path` を利用
@@ -99,6 +100,79 @@ php artisan test
 ```
 
 `c.sh` には Laravel のキャッシュクリア用コマンドをまとめています。
+
+### 千葉県の鉄道データを元プロジェクトから取り込む
+
+`iplusone_wordpress_laravel_admin` のバックアップ SQL から、千葉県など都道府県単位で駅・路線データを取り込めます。
+
+```bash
+php artisan railway:import-source-backups /home/ishii/projects/iplusone_wordpress_laravel_admin/storage/app/backups --pref-code=12
+```
+
+件数だけ確認したい場合:
+
+```bash
+php artisan railway:import-source-backups /home/ishii/projects/iplusone_wordpress_laravel_admin/storage/app/backups --pref-code=12 --dry-run
+```
+
+### 自治体マスタを元CSVから取り込む
+
+JIS市区町村CSVを `cities` / `municipalities` に取り込めます。
+
+```bash
+php artisan cities:import-jis-csv /home/ishii/projects/iplusone_wordpress_laravel_admin/storage/app/jis_cities_utf8.csv
+```
+
+件数確認のみ:
+
+```bash
+php artisan cities:import-jis-csv /home/ishii/projects/iplusone_wordpress_laravel_admin/storage/app/jis_cities_utf8.csv --dry-run
+```
+
+自治体財政CSVを `municipalities` / `muni_finance_stats` に取り込む場合:
+
+```bash
+php artisan mic:import-fiscal storage/app/muni_finance.csv --year=2024
+```
+
+### ローカルに本番相当の全国自治体スポットを入れる
+
+`iplusone_wordpress_laravel_admin` から全国自治体CSVを出力して、ローカル `plus1_community` の Docker 環境へ取り込む手順です。
+
+1. 元プロジェクトで CSV を出力します。
+
+```bash
+cd /home/ishii/projects/iplusone_wordpress_laravel_admin
+docker compose run --rm --no-deps laravel.app php artisan cities:export-spots-csv storage/app/exports/city-spots.csv --only-complete
+```
+
+2. `plus1_community` 側へ CSV をコピーします。
+
+```bash
+cd /home/ishii/projects/plus1_community
+mkdir -p storage/app/source_imports/exports
+cp /home/ishii/projects/iplusone_wordpress_laravel_admin/storage/app/exports/city-spots.csv storage/app/source_imports/exports/
+```
+
+3. ローカル Docker の Laravel へ取り込みます。
+
+```bash
+cd /home/ishii/projects/plus1_community
+docker compose exec -T php php artisan spots:import-city-csv storage/app/source_imports/exports/city-spots.csv --company=全国自治体
+```
+
+取り込み結果の目安:
+
+- `created: 1892`
+- `wordpress_sites: 1892`
+- `skipped: 0`
+
+確認の目安:
+
+- `spots` 総件数がおおむね `1896` 件になる
+- `municipal-office-%` の自治体スポットが `1892` 件になる
+- 自治体スポットの都道府県数が `47` になる
+- ローカル `http://localhost:8021/` と `http://localhost:8021/spots` で自治体スポットが見える
 
 ## ドキュメント
 

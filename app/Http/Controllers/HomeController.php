@@ -8,9 +8,13 @@ use Illuminate\Contracts\View\View;
 
 class HomeController extends Controller
 {
+    private const PRIORITY_PREFECTURE = '千葉県';
+
     public function index(): View
     {
         $sections = [
+            'priorityPrefecture' => self::PRIORITY_PREFECTURE,
+            'prioritySpots' => collect(),
             'featuredSpots' => collect(),
             'latestSpots' => collect(),
             'randomSpots' => collect(),
@@ -27,6 +31,13 @@ class HomeController extends Controller
                 ->with(['genres', 'tags', 'media'])
                 ->withCount('children');
 
+            $sections['prioritySpots'] = (clone $baseQuery)
+                ->where('prefecture', self::PRIORITY_PREFECTURE)
+                ->orderByDesc('published_at')
+                ->orderByDesc('view_count')
+                ->limit(10)
+                ->get();
+
             $sections['featuredSpots'] = SpotFeaturedSlot::query()
                 ->where('slot_type', 'featured')
                 ->where(function ($query) {
@@ -41,23 +52,25 @@ class HomeController extends Controller
             $sections['featuredSpots'] = $sections['featuredSpots']
                 ->pluck('spot')
                 ->filter()
+                ->sortByDesc(fn (Spot $spot) => $spot->prefecture === self::PRIORITY_PREFECTURE)
                 ->take(10)
                 ->values();
 
             if ($sections['featuredSpots']->isEmpty()) {
-                $sections['featuredSpots'] = (clone $baseQuery)
+                $sections['featuredSpots'] = $this->applyPriorityPrefectureOrdering(clone $baseQuery)
                     ->orderByDesc('view_count')
+                    ->orderByDesc('published_at')
                     ->limit(10)
                     ->get();
             }
 
-            $sections['latestSpots'] = (clone $baseQuery)
+            $sections['latestSpots'] = $this->applyPriorityPrefectureOrdering(clone $baseQuery)
                 ->orderByDesc('published_at')
                 ->limit(10)
                 ->get();
 
-            $sections['randomSpots'] = (clone $baseQuery)
-                ->inRandomOrder()
+            $sections['randomSpots'] = $this->applyPriorityPrefectureOrdering(clone $baseQuery)
+                ->inRandomOrder('id')
                 ->limit(10)
                 ->get();
 
@@ -70,5 +83,13 @@ class HomeController extends Controller
         }
 
         return view('home', $sections);
+    }
+
+    private function applyPriorityPrefectureOrdering(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->orderByRaw(
+            'CASE WHEN prefecture = ? THEN 0 ELSE 1 END',
+            [self::PRIORITY_PREFECTURE]
+        );
     }
 }

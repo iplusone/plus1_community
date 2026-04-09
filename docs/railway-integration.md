@@ -35,6 +35,7 @@
 
 - スポット詳細ページのアクセス情報に最寄り駅（複数・近い順）を表示
 - 各駅の徒歩分数を表示
+- スポットごとに表示対象を徒歩上限で絞り込み、既定値は `30` 分
 - 同じ駅・同じ路線のスポット一覧へのリンク（回遊）
 
 ---
@@ -70,7 +71,7 @@ railway_route_station    路線 × 駅（中間）
   id
   railway_route_id  → railway_routes.id
   station_id        → stations.id
-  order             駅の並び順
+  pivot_order       駅の並び順
   created_at / updated_at
 
 station_near_stations    近隣駅
@@ -254,6 +255,7 @@ GET /suggestions/area?q=渋谷
 - [x] `admin/spots/{spot}/stations` — 最寄り駅一覧・削除・手動追加
 - [x] 「位置情報から再算出」ボタン
 - [x] sub-nav に「最寄り駅」タブ追加
+- [x] スポット基本情報で「最寄り駅の徒歩表示上限（分）」を設定可能
 
 ### Step 5: 検索拡張 ✅ 完了
 

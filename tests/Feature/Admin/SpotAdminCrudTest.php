@@ -7,6 +7,7 @@ use App\Models\SpotCoupon;
 use App\Models\SpotMedia;
 use App\Models\SpotStaff;
 use App\Models\Station;
+use Database\Seeders\PrefecturesTableSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -15,6 +16,13 @@ use Tests\TestCase;
 class SpotAdminCrudTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(PrefecturesTableSeeder::class);
+    }
 
     /**
      * @param array<string, mixed> $attributes
@@ -101,6 +109,43 @@ class SpotAdminCrudTest extends TestCase
         ]);
     }
 
+    public function test_station_manual_add_prefers_same_prefecture_when_station_names_overlap(): void
+    {
+        $spot = $this->createSpot([
+            'slug' => 'station-pref-priority-test-spot',
+            'prefecture' => '千葉県',
+        ]);
+
+        $chibaStation = Station::query()->create([
+            'station_name' => '刈谷',
+            'operator_name' => 'いすみ鉄道',
+            'pref_code' => '12',
+            'longitude' => 140.0,
+            'latitude' => 35.3,
+        ]);
+
+        Station::query()->create([
+            'station_name' => '刈谷',
+            'operator_name' => '東海旅客鉄道',
+            'pref_code' => '23',
+            'longitude' => 136.9,
+            'latitude' => 35.0,
+        ]);
+
+        $response = $this->post(route('admin.spots.stations.store', $spot), [
+            'station_name' => '刈谷',
+            'walking_minutes' => 17,
+        ]);
+
+        $response->assertRedirect(route('admin.spots.stations.index', $spot));
+
+        $this->assertDatabaseHas('spot_stations', [
+            'spot_id' => $spot->id,
+            'station_id' => $chibaStation->id,
+            'walking_minutes' => 17,
+        ]);
+    }
+
     public function test_station_recalculate_requires_latitude_and_longitude(): void
     {
         $spot = $this->createSpot(['slug' => 'recalc-test-spot']);
@@ -111,6 +156,28 @@ class SpotAdminCrudTest extends TestCase
         $response->assertRedirect(route('admin.spots.stations.index', $spot));
         $response->assertSessionHasErrors([
             'recalculate' => '緯度・経度が未設定です。先にスポット基本情報で位置情報を入力してください。',
+        ]);
+    }
+
+    public function test_spot_can_save_nearest_station_max_walking_minutes_from_admin_form(): void
+    {
+        $spot = $this->createSpot(['slug' => 'walking-limit-test-spot']);
+
+        $response = $this->put(route('admin.spots.update', $spot), [
+            'name' => '管理テスト拠点',
+            'slug' => 'walking-limit-test-spot',
+            'prefecture' => '千葉県',
+            'city' => '千葉市',
+            'nearest_station_max_walking_minutes' => 20,
+            'is_public' => '1',
+            'sort_order' => 0,
+        ]);
+
+        $response->assertRedirect(route('admin.spots.index'));
+
+        $this->assertDatabaseHas('spots', [
+            'id' => $spot->id,
+            'nearest_station_max_walking_minutes' => 20,
         ]);
     }
 

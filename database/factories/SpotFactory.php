@@ -42,6 +42,7 @@ class SpotFactory extends Factory
             'description' => fake()->realText(140),
             'features' => fake()->sentence(18),
             'access_text' => fake()->sentence(18),
+            'nearest_station_max_walking_minutes' => 30,
             'business_hours_text' => '10:00 - 19:00',
             'holiday_text' => fake()->randomElement(['水曜', '日曜', '祝日']),
             'thumbnail_path' => null,

@@ -36,6 +36,7 @@ class Spot extends Model
         'business_hours_text',
         'holiday_text',
         'thumbnail_path',
+        'nearest_station_max_walking_minutes',
         'latitude',
         'longitude',
         'is_public',
@@ -52,6 +53,7 @@ class Spot extends Model
         return [
             'is_public' => 'boolean',
             'published_at' => 'datetime',
+            'nearest_station_max_walking_minutes' => 'integer',
             'latitude' => 'float',
             'longitude' => 'float',
         ];

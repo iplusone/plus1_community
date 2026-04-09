@@ -21,6 +21,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        if (\Illuminate\Support\Facades\Schema::hasTable('prefectures')) {
+            $this->call(PrefecturesTableSeeder::class);
+        }
+
         $admin = User::query()->firstOrCreate(
             ['email' => 'portal-admin@example.com'],
             [
