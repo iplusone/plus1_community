@@ -82,7 +82,7 @@ class HomeController extends Controller
 
         try {
             $sections['randomSpots'] = $this->applyPriorityPrefectureOrdering(clone $baseQuery)
-                ->inRandomOrder('id')
+                ->inRandomOrder()
                 ->limit(10)
                 ->get();
         } catch (\Throwable $e) {
