@@ -111,27 +111,56 @@ class SourceRailwayBackupImporter
         $stations = [];
 
         foreach ($this->parseDumpRows($path, 'stations') as $row) {
-            if (($row[6] ?? null) === null || (string) $row[6] !== $prefCode) {
+            $mapped = $this->mapStationRow($row);
+
+            if (($mapped['pref_code'] ?? null) === null || (string) $mapped['pref_code'] !== $prefCode) {
                 continue;
             }
 
-            $id = (int) $row[0];
-            $stations[$id] = [
-                'id' => $id,
-                'station_name' => $this->nullableString($row[1] ?? null),
-                'wikipedia_url' => $this->nullableString($row[2] ?? null),
-                'line_name' => $this->nullableString($row[3] ?? null),
-                'operator_name' => $this->nullableString($row[4] ?? null),
-                'pref_code' => $this->nullableString($row[6] ?? null),
-                'longitude' => $this->nullableFloat($row[7] ?? null),
-                'latitude' => $this->nullableFloat($row[8] ?? null),
-                'location_confirmed' => true,
-                'created_at' => $this->nullableString($row[11] ?? null),
-                'updated_at' => $this->nullableString($row[12] ?? null),
-            ];
+            $id = (int) $mapped['id'];
+            $stations[$id] = $mapped;
         }
 
         return $stations;
+    }
+
+    /**
+     * @param list<mixed> $row
+     * @return array<string, mixed>
+     */
+    private function mapStationRow(array $row): array
+    {
+        // Source backups from the original project contain extra columns such as
+        // display name, line/company codes, address and raw location text.
+        if (count($row) >= 16) {
+            return [
+                'id' => (int) ($row[0] ?? 0),
+                'station_name' => $this->nullableString($row[1] ?? null),
+                'wikipedia_url' => $this->nullableString($row[2] ?? null),
+                'line_name' => $this->nullableString($row[5] ?? null),
+                'operator_name' => $this->nullableString($row[6] ?? null),
+                'pref_code' => $this->nullableString($row[8] ?? null),
+                'longitude' => $this->nullableFloat($row[10] ?? null),
+                'latitude' => $this->nullableFloat($row[11] ?? null),
+                'location_confirmed' => true,
+                'created_at' => $this->nullableString($row[14] ?? null),
+                'updated_at' => $this->nullableString($row[15] ?? null),
+            ];
+        }
+
+        return [
+            'id' => (int) ($row[0] ?? 0),
+            'station_name' => $this->nullableString($row[1] ?? null),
+            'wikipedia_url' => $this->nullableString($row[2] ?? null),
+            'line_name' => $this->nullableString($row[3] ?? null),
+            'operator_name' => $this->nullableString($row[4] ?? null),
+            'pref_code' => $this->nullableString($row[6] ?? null),
+            'longitude' => $this->nullableFloat($row[7] ?? null),
+            'latitude' => $this->nullableFloat($row[8] ?? null),
+            'location_confirmed' => true,
+            'created_at' => $this->nullableString($row[11] ?? null),
+            'updated_at' => $this->nullableString($row[12] ?? null),
+        ];
     }
 
     /**

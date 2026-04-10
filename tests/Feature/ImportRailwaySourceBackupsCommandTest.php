@@ -21,9 +21,9 @@ class ImportRailwaySourceBackupsCommandTest extends TestCase
 
         file_put_contents($directory.'/stations_20250619_060027.sql', implode("\n", [
             "INSERT INTO `stations` VALUES ".
-            "(1,'千葉','https://example.com/chiba','総武線','JR東日本','11','12',140.123400,35.612300,NULL,NULL,'2025-05-18 07:22:20','2025-05-26 07:25:36'),".
-            "(2,'西千葉',NULL,'総武線','JR東日本','11','12',140.103400,35.622300,NULL,NULL,'2025-05-18 07:22:20','2025-05-26 07:25:36'),".
-            "(3,'渋谷',NULL,'山手線','JR東日本','11','13',139.701000,35.658000,NULL,NULL,'2025-05-18 07:22:20','2025-05-26 07:25:36');",
+            "(1,'千葉','https://example.com/chiba','千葉駅','0','総武線','JR東日本','11','12',NULL,140.123400,35.612300,'千葉県千葉市','raw','2025-05-18 07:22:20','2025-05-26 07:25:36'),".
+            "(2,'西千葉',NULL,'西千葉駅','0','総武線','JR東日本','11','12',NULL,140.103400,35.622300,'千葉県千葉市','raw','2025-05-18 07:22:20','2025-05-26 07:25:36'),".
+            "(3,'渋谷',NULL,'渋谷駅','0','山手線','JR東日本','11','13',NULL,139.701000,35.658000,'東京都渋谷区','raw','2025-05-18 07:22:20','2025-05-26 07:25:36');",
         ]));
 
         file_put_contents($directory.'/railway_routes_20250619_060027.sql', implode("\n", [
@@ -91,7 +91,7 @@ class ImportRailwaySourceBackupsCommandTest extends TestCase
         $directory = storage_path('app/testing/railway-backups-dry-run');
         File::ensureDirectoryExists($directory);
 
-        file_put_contents($directory.'/stations_20250619_060027.sql', "INSERT INTO `stations` VALUES (1,'千葉',NULL,'総武線','JR東日本','11','12',140.123400,35.612300,NULL,NULL,'2025-05-18 07:22:20','2025-05-26 07:25:36');\n");
+        file_put_contents($directory.'/stations_20250619_060027.sql', "INSERT INTO `stations` VALUES (1,'千葉',NULL,'千葉駅','0','総武線','JR東日本','11','12',NULL,140.123400,35.612300,'千葉県千葉市','raw','2025-05-18 07:22:20','2025-05-26 07:25:36');\n");
         file_put_contents($directory.'/railway_routes_20250619_060027.sql', "INSERT INTO `railway_routes` VALUES (10,'総武線','JR東日本','12',NULL,'2025-05-17 11:39:29','2025-05-27 14:59:44');\n");
         file_put_contents($directory.'/railway_route_station_20250619_060027.sql', "INSERT INTO `railway_route_station` VALUES (100,10,1,1,'2025-05-25 10:31:32','2025-05-25 10:31:32');\n");
 
