@@ -12,32 +12,34 @@ class HomeController extends Controller
 
     public function index(): View
     {
+        $baseQuery = Spot::query()
+            ->visible()
+            ->with(['genres', 'tags', 'media'])
+            ->withCount('children');
+
         $sections = [
             'priorityPrefecture' => self::PRIORITY_PREFECTURE,
             'prioritySpots' => collect(),
             'featuredSpots' => collect(),
             'latestSpots' => collect(),
             'randomSpots' => collect(),
-            'stats' => [
-                'total_spots' => 0,
-                'public_spots' => 0,
-            ],
+            'stats' => $this->loadStats($baseQuery),
             'dbWarning' => null,
         ];
 
         try {
-            $baseQuery = Spot::query()
-                ->visible()
-                ->with(['genres', 'tags', 'media'])
-                ->withCount('children');
-
             $sections['prioritySpots'] = (clone $baseQuery)
                 ->where('prefecture', self::PRIORITY_PREFECTURE)
                 ->orderByDesc('published_at')
                 ->orderByDesc('view_count')
                 ->limit(10)
                 ->get();
+        } catch (\Throwable $e) {
+            report($e);
+            $sections['dbWarning'] = '一部のトップ表示を読み込めませんでした。';
+        }
 
+        try {
             $sections['featuredSpots'] = SpotFeaturedSlot::query()
                 ->where('slot_type', 'featured')
                 ->where(function ($query) {
@@ -63,26 +65,53 @@ class HomeController extends Controller
                     ->limit(10)
                     ->get();
             }
+        } catch (\Throwable $e) {
+            report($e);
+            $sections['dbWarning'] = '一部のトップ表示を読み込めませんでした。';
+        }
 
+        try {
             $sections['latestSpots'] = $this->applyPriorityPrefectureOrdering(clone $baseQuery)
                 ->orderByDesc('published_at')
                 ->limit(10)
                 ->get();
+        } catch (\Throwable $e) {
+            report($e);
+            $sections['dbWarning'] = '一部のトップ表示を読み込めませんでした。';
+        }
 
+        try {
             $sections['randomSpots'] = $this->applyPriorityPrefectureOrdering(clone $baseQuery)
                 ->inRandomOrder('id')
                 ->limit(10)
                 ->get();
-
-            $sections['stats'] = [
-                'total_spots' => Spot::count(),
-                'public_spots' => (clone $baseQuery)->count(),
-            ];
         } catch (\Throwable $e) {
-            $sections['dbWarning'] = 'データベース未初期化のため、公開スポット一覧はまだ空です。';
+            report($e);
+            $sections['dbWarning'] = '一部のトップ表示を読み込めませんでした。';
         }
 
         return view('home', $sections);
+    }
+
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder<Spot> $baseQuery
+     * @return array{total_spots:int, public_spots:int}
+     */
+    private function loadStats(\Illuminate\Database\Eloquent\Builder $baseQuery): array
+    {
+        try {
+            return [
+                'total_spots' => Spot::query()->count(),
+                'public_spots' => (clone $baseQuery)->count(),
+            ];
+        } catch (\Throwable $e) {
+            report($e);
+
+            return [
+                'total_spots' => 0,
+                'public_spots' => 0,
+            ];
+        }
     }
 
     private function applyPriorityPrefectureOrdering(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
