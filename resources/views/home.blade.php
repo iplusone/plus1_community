@@ -28,6 +28,16 @@
         </div>
     </section>
 
+    <section class="section-block">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Station Search</p>
+                <h2>駅・路線から探す</h2>
+            </div>
+        </div>
+        <div data-component="station-picker" id="home-station-picker"></div>
+    </section>
+
     @if ($dbWarning)
         <section class="notice-panel">
             <strong>セットアップ待ち</strong>

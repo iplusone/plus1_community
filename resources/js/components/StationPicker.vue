@@ -132,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, getCurrentInstance } from 'vue'
 
 const emit = defineEmits(['station-selected'])
 
@@ -196,14 +196,18 @@ async function selectRoute(route) {
 
 function selectStation(station) {
   selectedStation.value = station
-  emit('station-selected', {
+  const payload = {
     id: station.id,
     station_name: station.station_name,
     line_name: selectedRoute.value.line_name,
     operator_name: selectedRoute.value.operator_name,
     pref_name: selectedPref.value.name,
     pref_code: selectedPref.value.code,
-  })
+  }
+  emit('station-selected', payload)
+  getCurrentInstance()?.vnode.el?.dispatchEvent(
+    new CustomEvent('station-selected', { bubbles: true, detail: payload })
+  )
 }
 
 function goToStep(step) {

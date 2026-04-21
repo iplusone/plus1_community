@@ -4,7 +4,13 @@ import StationPicker from './components/StationPicker.vue';
 
 document.querySelectorAll('[data-component="station-picker"]').forEach((el) => {
     const app = createApp(StationPicker);
-    app.mount(el);
+    const vm = app.mount(el);
+    el.addEventListener('station-selected', (e) => {
+        const station = e.detail ?? e;
+        if (station?.station_name) {
+            window.location.href = `/spots?area=${encodeURIComponent('[駅] ' + station.station_name)}`;
+        }
+    });
 });
 
 const bindSuggestions = () => {
