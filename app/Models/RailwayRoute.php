@@ -14,7 +14,7 @@ class RailwayRoute extends Model
         'geometry',
     ];
 
-    public function stations(): BelongsToMany
+public function stations(): BelongsToMany
     {
         return $this->belongsToMany(Station::class, 'railway_route_station', 'railway_route_id', 'station_id')
             ->withPivot('pivot_order')

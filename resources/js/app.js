@@ -1,4 +1,11 @@
 import './bootstrap';
+import { createApp } from 'vue';
+import StationPicker from './components/StationPicker.vue';
+
+document.querySelectorAll('[data-component="station-picker"]').forEach((el) => {
+    const app = createApp(StationPicker);
+    app.mount(el);
+});
 
 const bindSuggestions = () => {
     const bindings = [
