@@ -35,7 +35,7 @@
                 <h2>駅・路線から探す</h2>
             </div>
         </div>
-        <div data-component="station-picker" data-pref-code="12" data-pref-name="千葉県"></div>
+        <div data-component="station-picker"></div>
     </section>
 
     @if ($dbWarning)

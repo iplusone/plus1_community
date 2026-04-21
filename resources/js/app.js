@@ -3,11 +3,7 @@ import { createApp } from 'vue';
 import StationPicker from './components/StationPicker.vue';
 
 document.querySelectorAll('[data-component="station-picker"]').forEach((el) => {
-    const props = {
-        prefCode: el.dataset.prefCode ?? null,
-        prefName: el.dataset.prefName ?? null,
-    };
-    const app = createApp(StationPicker, props);
+    const app = createApp(StationPicker);
     app.mount(el);
     el.addEventListener('station-selected', (e) => {
         const station = e.detail;

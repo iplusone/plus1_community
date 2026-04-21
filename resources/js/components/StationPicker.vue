@@ -134,11 +134,6 @@
 <script setup>
 import { ref, computed, onMounted, getCurrentInstance } from 'vue'
 
-const props = defineProps({
-  prefCode: { type: String, default: null },
-  prefName: { type: String, default: null },
-})
-
 const emit = defineEmits(['station-selected'])
 
 const steps = ['都道府県', '路線', '駅']
@@ -169,19 +164,10 @@ const filteredStations = computed(() =>
 )
 
 onMounted(async () => {
-  if (props.prefCode) {
-    selectedPref.value = { code: props.prefCode, name: props.prefName ?? props.prefCode }
-    loading.value = true
-    currentStep.value = 1
-    const res = await fetch(`/api/station-picker/railways?pref_code=${props.prefCode}`)
-    routes.value = await res.json()
-    loading.value = false
-  } else {
-    loading.value = true
-    const res = await fetch('/api/station-picker/prefectures')
-    regions.value = await res.json()
-    loading.value = false
-  }
+  loading.value = true
+  const res = await fetch('/api/station-picker/prefectures')
+  regions.value = await res.json()
+  loading.value = false
 })
 
 async function selectPref(pref) {
