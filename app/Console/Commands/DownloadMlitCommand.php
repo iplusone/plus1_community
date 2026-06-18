@@ -21,17 +21,18 @@ class DownloadMlitCommand extends Command
      * type=national : 全国一括ファイル
      * type=pref     : 都道府県別（url に {PREF} プレースホルダー）
      */
+    // 正しいパターン: {BASE}/{CODE}/{CODE}-{YEAR}/{CODE}-{YEAR}[_{PREF}]_GML.zip
     private const DATASETS = [
-        'P35' => ['type' => 'national', 'url' => self::BASE . 'P35/P35-18_GML.zip'],
-        'P30' => ['type' => 'national', 'url' => self::BASE . 'P30/P30-13.zip'],
-        'P11' => ['type' => 'national', 'url' => self::BASE . 'P11/P11-22_GML.zip'],
-        'P12' => ['type' => 'national', 'url' => self::BASE . 'P12/P12-19_GML.zip'],
-        'P20' => ['type' => 'pref', 'url' => self::BASE . 'P20/P20-12_{PREF}_GML.zip'],
-        'P04' => ['type' => 'pref', 'url' => self::BASE . 'P04/P04-21_{PREF}_GML.zip'],
-        'P14' => ['type' => 'pref', 'url' => self::BASE . 'P14/P14-15_{PREF}_GML.zip'],
-        'A27' => ['type' => 'pref', 'url' => self::BASE . 'A27/A27-16_{PREF}_GML.zip'],
-        'P17' => ['type' => 'pref', 'url' => self::BASE . 'P17/P17-12_{PREF}_GML.zip'],
-        'P18' => ['type' => 'pref', 'url' => self::BASE . 'P18/P18-12_{PREF}_GML.zip'],
+        'P35' => ['type' => 'national', 'url' => self::BASE . 'P35/P35-18/P35-18_GML.zip'],
+        'P30' => ['type' => 'national', 'url' => self::BASE . 'P30/P30-13/P30-13.zip'],
+        'P11' => ['type' => 'national', 'url' => self::BASE . 'P11/P11-22/P11-22_GML.zip'],
+        'P12' => ['type' => 'national', 'url' => self::BASE . 'P12/P12-19/P12-19_GML.zip'],
+        'P20' => ['type' => 'pref', 'url' => self::BASE . 'P20/P20-12/P20-12_{PREF}_GML.zip'],
+        'P04' => ['type' => 'pref', 'url' => self::BASE . 'P04/P04-21/P04-21_{PREF}_GML.zip'],
+        'P14' => ['type' => 'pref', 'url' => self::BASE . 'P14/P14-15/P14-15_{PREF}_GML.zip'],
+        'A27' => ['type' => 'pref', 'url' => self::BASE . 'A27/A27-16/A27-16_{PREF}_GML.zip'],
+        'P17' => ['type' => 'pref', 'url' => self::BASE . 'P17/P17-12/P17-12_{PREF}_GML.zip'],
+        'P18' => ['type' => 'pref', 'url' => self::BASE . 'P18/P18-12/P18-12_{PREF}_GML.zip'],
     ];
 
     private const PREFS = [
