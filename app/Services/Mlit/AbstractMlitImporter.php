@@ -70,10 +70,13 @@ abstract class AbstractMlitImporter
     }
 
     /**
-     * MLIT JPGIS 2.1 GML (XML) を GeoJSON 互換フィーチャー配列に変換する。
+     * MLIT JPGIS GML (XML) を GeoJSON 互換フィーチャー配列に変換する。
      *
      * GML 座標は「緯度 経度」順（GeoJSON は「経度 緯度」の逆）。
      * 要素名は GeoJSON プロパティキーと同一（ksj:P11_001 → P11_001）。
+     *
+     * GML 3.1.1（2018年以前データ）と GML 3.2（2019年以降）の両方に対応するため
+     * namespace URI はドキュメントから動的に検出する。
      *
      * @return array<int, array{geometry: array, properties: array}>
      */
@@ -87,8 +90,22 @@ abstract class AbstractMlitImporter
             throw new RuntimeException('GML の解析に失敗しました: ' . implode(', ', $errors));
         }
 
-        $gmlNs = 'http://www.opengis.net/gml/3.2';
-        $ksjNs = 'http://nlftp.mlit.go.jp/ksj/schemas/ksj-app';
+        // ドキュメントから namespace URI を動的に取得
+        $namespaces = $xml->getNamespaces(true);
+        $gmlNs = $ksjNs = null;
+
+        foreach ($namespaces as $uri) {
+            if ($gmlNs === null && str_contains($uri, 'opengis.net/gml')) {
+                $gmlNs = $uri;
+            }
+            if ($ksjNs === null && str_contains($uri, 'nlftp.mlit.go.jp')) {
+                $ksjNs = $uri;
+            }
+        }
+
+        if ($gmlNs === null || $ksjNs === null) {
+            throw new RuntimeException("GML の namespace を検出できません: {$path}");
+        }
 
         $features = [];
 

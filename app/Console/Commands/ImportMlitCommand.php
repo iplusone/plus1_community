@@ -51,9 +51,9 @@ class ImportMlitCommand extends Command
             return self::FAILURE;
         }
 
-        $file = $this->resolveFilePath($code);
+        $files = $this->resolveFiles($code);
 
-        if ($file === null) {
+        if (empty($files)) {
             $this->error("インポートするファイルが見つかりません。--file または --dir を指定してください。");
 
             return self::FAILURE;
@@ -65,48 +65,54 @@ class ImportMlitCommand extends Command
             $this->info("[{$code}] dry-run モード: DB への書き込みは行いません");
         }
 
-        $this->info("[{$code}] インポート開始: {$file}");
+        /** @var AbstractMlitImporter $importer */
+        $importer = new $this->importers[$code];
+        $total = ['imported' => 0, 'skipped' => 0];
 
-        try {
-            /** @var AbstractMlitImporter $importer */
-            $importer = new $this->importers[$code];
-            $result = $importer->import($file, $dryRun);
-        } catch (Throwable $e) {
-            $this->error("インポート失敗: {$e->getMessage()}");
+        $this->info("[{$code}] インポート開始 (" . count($files) . " ファイル)");
 
-            return self::FAILURE;
+        foreach ($files as $file) {
+            try {
+                $result = $importer->import($file, $dryRun);
+                $total['imported'] += $result['imported'];
+                $total['skipped']  += $result['skipped'];
+                $this->line("  " . basename($file) . " → imported: {$result['imported']}, skipped: {$result['skipped']}");
+            } catch (Throwable $e) {
+                $this->error("  " . basename($file) . " 失敗: {$e->getMessage()}");
+
+                return self::FAILURE;
+            }
         }
 
         $tag = $dryRun ? '（dry-run）' : '';
-        $this->info("[{$code}] 完了{$tag} — imported: {$result['imported']}, skipped: {$result['skipped']}");
+        $this->info("[{$code}] 完了{$tag} — imported: {$total['imported']}, skipped: {$total['skipped']}");
 
         return self::SUCCESS;
     }
 
-    private function resolveFilePath(string $code): ?string
+    /** @return string[] */
+    private function resolveFiles(string $code): array
     {
-        // --file 優先
+        // --file 優先（単一ファイル指定）
         if ($file = $this->option('file')) {
-            return $file;
+            return [$file];
         }
 
-        // --dir/{code}/ 以下から GeoJSON / ZIP を探す
         $baseDir = $this->option('dir') ?? storage_path('app/mlit');
-        $dir = rtrim($baseDir, '/') . '/' . $code;
+        $dir     = rtrim($baseDir, '/') . '/' . $code;
 
         if (! is_dir($dir)) {
-            return null;
+            return [];
         }
 
-        $files = glob("{$dir}/*.{geojson,zip}", GLOB_BRACE);
+        $files = glob("{$dir}/*.{geojson,zip,xml}", GLOB_BRACE);
 
         if (empty($files)) {
-            return null;
+            return [];
         }
 
-        // 最新ファイル（更新日時が新しいもの）を使用
-        usort($files, fn ($a, $b) => filemtime($b) - filemtime($a));
+        sort($files); // ファイル名順（都道府県コード順）
 
-        return $files[0];
+        return $files;
     }
 }
