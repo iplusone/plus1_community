@@ -41,9 +41,14 @@ abstract class AbstractMlitImporter
         $skipped  = 0;
 
         foreach ($this->resolveDataFiles($filePath) as ['path' => $path, 'format' => $format]) {
-            $features = $format === 'gml'
-                ? $this->parseGml($path)
-                : $this->parseGeoJson($path);
+            try {
+                $features = $format === 'gml'
+                    ? $this->parseGml($path)
+                    : $this->parseGeoJson($path);
+            } catch (RuntimeException) {
+                // 壊れた個別ファイルはスキップして続行
+                continue;
+            }
 
             $result    = $this->importFeatures($features, $dryRun);
             $imported += $result['imported'];
