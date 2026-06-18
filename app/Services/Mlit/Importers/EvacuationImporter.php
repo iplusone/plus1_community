@@ -20,27 +20,36 @@ class EvacuationImporter extends AbstractMlitImporter
 
     protected function mapFeature(array $properties, array $geometry): ?array
     {
-        $name = trim((string) ($properties['P20_002'] ?? ''));
+        // GeoJSON: P20_002 / GML: name
+        $name      = trim((string) ($properties['P20_002'] ?? $properties['name'] ?? ''));
+        // GeoJSON: P20_001 / GML: administrativeAreaCode
+        $adminCode = trim((string) ($properties['P20_001'] ?? $properties['administrativeAreaCode'] ?? ''));
+        // GeoJSON: P20_003 / GML: address
+        $address   = trim((string) ($properties['P20_003'] ?? $properties['address'] ?? ''));
 
         if ($name === '') {
             return null;
         }
-
-        $adminCode = trim((string) ($properties['P20_001'] ?? ''));
 
         return [
             'sub_category'    => 'evacuation_facility',
             'name'            => $name,
             'pref_code'       => $adminCode ? $this->prefCodeFromAdminCode($adminCode) : null,
             'admin_area_code' => $adminCode ?: null,
-            'address'         => trim((string) ($properties['P20_003'] ?? '')) ?: null,
+            'address'         => $address ?: null,
             'attributes'      => [
-                'facility_type' => $properties['P20_004'] ?? null,
-                'capacity'      => isset($properties['P20_005']) ? (int) $properties['P20_005'] : null,
-                'area_m2'       => isset($properties['P20_006']) ? (float) $properties['P20_006'] : null,
-                'earthquake'    => $this->toBool($properties['P20_007'] ?? null),
-                'tsunami'       => $this->toBool($properties['P20_008'] ?? null),
-                'flood'         => $this->toBool($properties['P20_009'] ?? null),
+                // GeoJSON: P20_004 / GML: facilityType
+                'facility_type' => $properties['P20_004'] ?? $properties['facilityType'] ?? null,
+                // GeoJSON: P20_005 / GML: seatingCapacity
+                'capacity'      => isset($properties['P20_005']) ? (int) $properties['P20_005']
+                    : (isset($properties['seatingCapacity']) ? (int) $properties['seatingCapacity'] : null),
+                // GeoJSON: P20_006 / GML: facilityScale
+                'area_m2'       => isset($properties['P20_006']) ? (float) $properties['P20_006']
+                    : (isset($properties['facilityScale']) ? (float) $properties['facilityScale'] : null),
+                // GML では hazardClassification 内の葉ノードがフラット化される
+                'earthquake'    => $this->toBool($properties['P20_007'] ?? $properties['earthquakeHazard'] ?? null),
+                'tsunami'       => $this->toBool($properties['P20_008'] ?? $properties['tsunamiHazard'] ?? null),
+                'flood'         => $this->toBool($properties['P20_009'] ?? $properties['windAndFloodDamage'] ?? null),
                 'volcano'       => $this->toBool($properties['P20_010'] ?? null),
                 'other'         => $this->toBool($properties['P20_011'] ?? null),
             ],

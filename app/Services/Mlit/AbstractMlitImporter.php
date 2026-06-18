@@ -236,12 +236,38 @@ abstract class AbstractMlitImporter
                     }
                 }
             } else {
-                $properties[$localName] = trim($child->textContent);
+                // 子要素を持つ場合は再帰的にフラット化（P20 hazardClassification 等）
+                $this->collectLeafProperties($child, $properties);
             }
         }
 
         // プロパティがあればgeometryがなくても返す（住所のみ登録用）
         return ! empty($properties) ? ['geometry' => $geometry, 'properties' => $properties] : null;
+    }
+
+    /**
+     * DOMElement の葉ノード（テキストのみの要素）を再帰的に $properties へ収集する。
+     * ネスト構造のプロパティ（P20 の hazardClassification 等）を平坦化して取り込む。
+     */
+    private function collectLeafProperties(DOMElement $element, array &$properties): void
+    {
+        $hasChildElements = false;
+        foreach ($element->childNodes as $child) {
+            if ($child instanceof DOMElement) {
+                $hasChildElements = true;
+                break;
+            }
+        }
+
+        if ($hasChildElements) {
+            foreach ($element->childNodes as $child) {
+                if ($child instanceof DOMElement) {
+                    $this->collectLeafProperties($child, $properties);
+                }
+            }
+        } else {
+            $properties[$element->localName] = trim($element->textContent);
+        }
     }
 
     // -------------------------------------------------------------------------
