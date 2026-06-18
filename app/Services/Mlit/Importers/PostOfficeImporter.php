@@ -19,24 +19,27 @@ class PostOfficeImporter extends AbstractMlitImporter
 
     protected function mapFeature(array $properties, array $geometry): ?array
     {
-        $name = trim((string) ($properties['P30_005'] ?? ''));
+        // GeoJSON: P30_005 / GML: name
+        $name      = trim((string) ($properties['P30_005'] ?? $properties['name'] ?? ''));
+        // GeoJSON: P30_001 / GML: administrativeArea
+        $adminCode = trim((string) ($properties['P30_001'] ?? $properties['administrativeArea'] ?? ''));
+        // GeoJSON: P30_006 / GML: address
+        $address   = trim((string) ($properties['P30_006'] ?? $properties['address'] ?? ''));
 
         if ($name === '') {
             return null;
         }
-
-        $adminCode = trim((string) ($properties['P30_001'] ?? ''));
 
         return [
             'sub_category'    => 'post_office',
             'name'            => $name,
             'pref_code'       => $adminCode ? $this->prefCodeFromAdminCode($adminCode) : null,
             'admin_area_code' => $adminCode ?: null,
-            'address'         => trim((string) ($properties['P30_006'] ?? '')) ?: null,
+            'address'         => $address ?: null,
             'attributes'      => [
-                'large_category' => $properties['P30_002'] ?? null,
-                'small_category' => $properties['P30_003'] ?? null,
-                'post_type'      => $properties['P30_004'] ?? null,
+                'large_category' => $properties['P30_002'] ?? $properties['publicFacilityLargeClassification'] ?? null,
+                'small_category' => $properties['P30_003'] ?? $properties['publicFacilitySmallClassification'] ?? null,
+                'post_type'      => $properties['P30_004'] ?? $properties['type'] ?? null,
             ],
         ];
     }
