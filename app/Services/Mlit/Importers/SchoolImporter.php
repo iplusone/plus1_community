@@ -18,22 +18,27 @@ class SchoolImporter extends AbstractMlitImporter
 
     protected function mapFeature(array $properties, array $geometry): ?array
     {
-        $name = trim((string) ($properties['A27_003'] ?? ''));
+        // GeoJSON: A27_003 / GML: name
+        $name      = trim((string) ($properties['A27_003'] ?? $properties['name'] ?? ''));
+        // GeoJSON: A27_001 / GML: administrativeAreaCode
+        $adminCode = trim((string) ($properties['A27_001'] ?? $properties['administrativeAreaCode'] ?? ''));
+        // GeoJSON: A27_004 / GML: address
+        $address   = trim((string) ($properties['A27_004'] ?? $properties['address'] ?? ''));
+        // GeoJSON: A27_002 / GML: establishmentBody
+        $estBody   = $properties['A27_002'] ?? $properties['establishmentBody'] ?? null;
 
         if ($name === '') {
             return null;
         }
-
-        $adminCode = trim((string) ($properties['A27_001'] ?? ''));
 
         return [
             'sub_category'    => 'school',
             'name'            => $name,
             'pref_code'       => $adminCode ? $this->prefCodeFromAdminCode($adminCode) : null,
             'admin_area_code' => $adminCode ?: null,
-            'address'         => trim((string) ($properties['A27_004'] ?? '')) ?: null,
+            'address'         => $address ?: null,
             'attributes'      => [
-                'establishment_type' => $properties['A27_002'] ?? null,
+                'establishment_type' => $estBody,
             ],
         ];
     }
