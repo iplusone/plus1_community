@@ -101,7 +101,8 @@ abstract class AbstractMlitImporter
         $dom = new DOMDocument();
 
         // LIBXML_RECOVER: P12等の一部データにタグ属性の欠損があるため、可能な限り復元して継続
-        $loaded = $dom->load($path, \LIBXML_RECOVER | \LIBXML_NOERROR | \LIBXML_NOWARNING);
+        // 1=LIBXML_RECOVER, 32=LIBXML_NOERROR, 64=LIBXML_NOWARNING
+        $loaded = $dom->load($path, 1 | 32 | 64);
         libxml_clear_errors();
 
         if (! $loaded || $dom->documentElement === null) {
