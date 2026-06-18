@@ -25,6 +25,10 @@ class DatabaseSeeder extends Seeder
             $this->call(PrefecturesTableSeeder::class);
         }
 
+        if (\Illuminate\Support\Facades\Schema::hasTable('mlit_datasets')) {
+            $this->call(MlitDatasetsSeeder::class);
+        }
+
         $admin = User::query()->firstOrCreate(
             ['email' => 'portal-admin@example.com'],
             [
