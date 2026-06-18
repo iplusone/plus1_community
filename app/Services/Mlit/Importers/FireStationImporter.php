@@ -24,21 +24,23 @@ class FireStationImporter extends AbstractMlitImporter
 
     protected function mapFeature(array $properties, array $geometry): ?array
     {
-        $name = trim((string) ($properties['P17_001'] ?? ''));
+        // GeoJSON: P17_001〜004 / GML（旧 JPGIS）: fsn, aac, ccd, adr
+        $name      = trim((string) ($properties['P17_001'] ?? $properties['fsn'] ?? ''));
+        $adminCode = trim((string) ($properties['P17_002'] ?? $properties['aac'] ?? ''));
+        $typeProp  = $properties['P17_003'] ?? $properties['ccd'] ?? null;
+        $address   = trim((string) ($properties['P17_004'] ?? $properties['adr'] ?? ''));
+        $typeCode  = $typeProp !== null ? (int) $typeProp : null;
 
         if ($name === '') {
             return null;
         }
-
-        $adminCode = trim((string) ($properties['P17_002'] ?? ''));
-        $typeCode = isset($properties['P17_003']) ? (int) $properties['P17_003'] : null;
 
         return [
             'sub_category'    => 'fire_station',
             'name'            => $name,
             'pref_code'       => $adminCode ? $this->prefCodeFromAdminCode($adminCode) : null,
             'admin_area_code' => $adminCode ?: null,
-            'address'         => trim((string) ($properties['P17_004'] ?? '')) ?: null,
+            'address'         => $address ?: null,
             'attributes'      => [
                 'type_code'  => $typeCode,
                 'type_label' => $typeCode ? (self::TYPE_LABELS[$typeCode] ?? null) : null,

@@ -4,8 +4,10 @@ namespace App\Services\Mlit;
 
 use App\Models\MlitDataset;
 use App\Models\MlitSpot;
+use DOMDocument;
+use DOMElement;
+use DOMXPath;
 use RuntimeException;
-use SimpleXMLElement;
 use ZipArchive;
 
 abstract class AbstractMlitImporter
@@ -74,52 +76,67 @@ abstract class AbstractMlitImporter
      *
      * MLIT の GML 形式は以下の2パターンが存在する：
      *
-     * パターンA（旧形式 / 消防署・警察署等）:
-     *   座標が <gml:Point gml:id="pt_xxx"><gml:pos>LAT LON</gml:pos></gml:Point> として
-     *   Dataset 直下に定義され、フィーチャー要素が
-     *   <ksj:position xlink:href="#pt_xxx"/> で参照する。
+     * パターンA（旧形式 / P17消防署・P18警察署等）:
+     *   <gml:Point gml:id="pt_xxx"> が Dataset 直下に並び、
+     *   フィーチャー要素 <ksj:pos xlink:href="#pt_xxx"/> で参照する。
+     *   プロパティ名は短縮コード（fsn, aac, ccd, adr 等）。
      *
-     * パターンB（新形式 / 道の駅等）:
+     * パターンB（新形式 / P35道の駅等 GML版）:
      *   <gml:featureMember> でフィーチャーを囲み、
-     *   <ksj:position><gml:Point>...</gml:Point></ksj:position> で座標を内包する。
+     *   <ksj:position><gml:Point>…</gml:Point></ksj:position> で座標を内包する。
+     *   プロパティ名は P35_001 等の長形式。
      *
      * @return array<int, array{geometry: array, properties: array}>
      */
     private function parseGml(string $path): array
     {
         libxml_use_internal_errors(true);
-        $xml = simplexml_load_file($path);
+        $dom = new DOMDocument();
 
-        if ($xml === false) {
+        if (! $dom->load($path)) {
             $errors = array_map(fn ($e) => $e->message, libxml_get_errors());
             throw new RuntimeException('GML の解析に失敗しました: ' . implode(', ', $errors));
         }
 
-        $namespaces = $xml->getNamespaces(true);
-        $gmlNs = $ksjNs = null;
+        $root   = $dom->documentElement;
+        $gmlNs  = $root->lookupNamespaceURI('gml') ?? '';
+        $ksjNs  = $root->lookupNamespaceURI('ksj') ?? '';
 
-        foreach ($namespaces as $uri) {
-            if ($gmlNs === null && str_contains($uri, 'opengis.net/gml')) {
-                $gmlNs = $uri;
-            }
-            if ($ksjNs === null && str_contains($uri, 'nlftp.mlit.go.jp')) {
-                $ksjNs = $uri;
+        // 全 xmlns 属性から再検出（プレフィックスが異なる場合の補完）
+        if ($gmlNs === '' || $ksjNs === '') {
+            foreach ($root->attributes as $attr) {
+                $uri = $attr->value;
+                if ($gmlNs === '' && str_contains($uri, 'opengis.net/gml')) {
+                    $gmlNs = $uri;
+                }
+                if ($ksjNs === '' && str_contains($uri, 'nlftp.mlit.go.jp')) {
+                    $ksjNs = $uri;
+                }
             }
         }
 
-        if ($gmlNs === null || $ksjNs === null) {
+        if ($gmlNs === '' || $ksjNs === '') {
             throw new RuntimeException("GML の namespace を検出できません: {$path}");
         }
+
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('gml', $gmlNs);
+        $xpath->registerNamespace('ksj', $ksjNs);
+        $xpath->registerNamespace('xlink', 'http://www.w3.org/1999/xlink');
 
         // ------------------------------------------------------------------
         // パターンA: Dataset 直下の <gml:Point> を ID → 座標マップに収集
         // ------------------------------------------------------------------
         $pointMap = [];
-        foreach ($xml->children($gmlNs)->Point as $point) {
-            $id  = (string) ($point->attributes($gmlNs)['id'] ?? $point->attributes()['id'] ?? '');
-            $pos = trim((string) $point->children($gmlNs)->pos);
-            if ($id !== '' && $pos !== '') {
-                $parts = preg_split('/\s+/', $pos);
+        foreach ($xpath->query('gml:Point', $root) as $point) {
+            $id = $point->getAttributeNS($gmlNs, 'id');
+            if ($id === '') {
+                // GML 3.1.1 では gml:id ではなく gml:id が無名前空間属性の場合もある
+                $id = $point->getAttribute('gml:id');
+            }
+            $posNodes = $xpath->query('gml:pos', $point);
+            if ($id !== '' && $posNodes->length > 0) {
+                $parts = preg_split('/\s+/', trim($posNodes->item(0)->textContent));
                 if (count($parts) >= 2) {
                     // GML は LAT LON 順 → GeoJSON [LON, LAT]
                     $pointMap[$id] = [(float) $parts[1], (float) $parts[0]];
@@ -127,75 +144,87 @@ abstract class AbstractMlitImporter
             }
         }
 
-        // ------------------------------------------------------------------
-        // パターンB: <gml:featureMember> を使う新形式
-        // ------------------------------------------------------------------
         $features = [];
 
-        foreach ($xml->children($gmlNs)->featureMember as $member) {
-            foreach ($member->children($ksjNs) as $feature) {
-                $geometry   = null;
-                $properties = [];
-
-                foreach ($feature->children($ksjNs) as $localName => $child) {
-                    if ($localName === 'position') {
-                        $point = $child->children($gmlNs)->Point ?? null;
-                        if ($point) {
-                            $pos   = trim((string) $point->children($gmlNs)->pos);
-                            $parts = preg_split('/\s+/', $pos);
-                            if (count($parts) >= 2) {
-                                $geometry = [
-                                    'type'        => 'Point',
-                                    'coordinates' => [(float) $parts[1], (float) $parts[0]],
-                                ];
-                            }
-                        }
-                    } else {
-                        $properties[$localName] = (string) $child;
+        // ------------------------------------------------------------------
+        // パターンB: <gml:featureMember> ラッパーを使う新形式
+        // ------------------------------------------------------------------
+        $featureMembers = $xpath->query('gml:featureMember', $root);
+        if ($featureMembers->length > 0) {
+            foreach ($featureMembers as $member) {
+                foreach ($member->childNodes as $node) {
+                    if (! ($node instanceof DOMElement)) {
+                        continue;
+                    }
+                    $f = $this->extractDomFeature($node, $xpath, $gmlNs, $pointMap);
+                    if ($f !== null) {
+                        $features[] = $f;
                     }
                 }
-
-                if ($geometry !== null) {
-                    $features[] = ['geometry' => $geometry, 'properties' => $properties];
-                }
             }
-        }
 
-        if (! empty($features)) {
             return $features;
         }
 
         // ------------------------------------------------------------------
         // パターンA: ksj フィーチャーが Dataset 直下に並ぶ形式
-        // xlink:href="#pt_xxx" で pointMap を参照する
         // ------------------------------------------------------------------
-        $xlinkNs = 'http://www.w3.org/1999/xlink';
-
-        foreach ($xml->children($ksjNs) as $feature) {
-            $geometry   = null;
-            $properties = [];
-
-            foreach ($feature->children($ksjNs) as $localName => $child) {
-                if ($localName === 'position') {
-                    $href    = (string) ($child->attributes($xlinkNs)['href'] ?? '');
-                    $pointId = ltrim($href, '#');
-                    if (isset($pointMap[$pointId])) {
-                        $geometry = [
-                            'type'        => 'Point',
-                            'coordinates' => $pointMap[$pointId],
-                        ];
-                    }
-                } else {
-                    $properties[$localName] = (string) $child;
-                }
-            }
-
-            if ($geometry !== null) {
-                $features[] = ['geometry' => $geometry, 'properties' => $properties];
+        foreach ($xpath->query('ksj:*', $root) as $node) {
+            $f = $this->extractDomFeature($node, $xpath, $gmlNs, $pointMap);
+            if ($f !== null) {
+                $features[] = $f;
             }
         }
 
         return $features;
+    }
+
+    /**
+     * DOMElement からフィーチャーの座標とプロパティを抽出する。
+     *
+     * @param  array<string, array<float>>  $pointMap  gml:id → [lon, lat]
+     * @return array{geometry: array, properties: array}|null
+     */
+    private function extractDomFeature(DOMElement $node, DOMXPath $xpath, string $gmlNs, array $pointMap): ?array
+    {
+        $geometry   = null;
+        $properties = [];
+
+        foreach ($node->childNodes as $child) {
+            if (! ($child instanceof DOMElement)) {
+                continue;
+            }
+
+            $localName = $child->localName;
+
+            // 座標参照要素: "pos"（旧 JPGIS）または "position"（新形式）
+            if ($localName === 'pos' || $localName === 'position') {
+                $href = $child->getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+                if ($href !== '') {
+                    // xlink:href="#pt_xxx" → pointMap を参照
+                    $pointId = ltrim($href, '#');
+                    if (isset($pointMap[$pointId])) {
+                        $geometry = ['type' => 'Point', 'coordinates' => $pointMap[$pointId]];
+                    }
+                } else {
+                    // インライン <gml:Point><gml:pos>…</gml:pos></gml:Point>
+                    $posNodes = $xpath->query('.//gml:pos', $child);
+                    if ($posNodes->length > 0) {
+                        $parts = preg_split('/\s+/', trim($posNodes->item(0)->textContent));
+                        if (count($parts) >= 2) {
+                            $geometry = [
+                                'type'        => 'Point',
+                                'coordinates' => [(float) $parts[1], (float) $parts[0]],
+                            ];
+                        }
+                    }
+                }
+            } else {
+                $properties[$localName] = trim($child->textContent);
+            }
+        }
+
+        return $geometry !== null ? ['geometry' => $geometry, 'properties' => $properties] : null;
     }
 
     // -------------------------------------------------------------------------
