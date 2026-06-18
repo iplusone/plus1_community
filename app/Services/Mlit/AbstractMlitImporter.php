@@ -100,9 +100,12 @@ abstract class AbstractMlitImporter
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
 
-        if (! $dom->load($path)) {
-            $errors = array_map(fn ($e) => $e->message, libxml_get_errors());
-            throw new RuntimeException('GML の解析に失敗しました: ' . implode(', ', $errors));
+        // LIBXML_RECOVER: P12等の一部データにタグ属性の欠損があるため、可能な限り復元して継続
+        $loaded = $dom->load($path, LIBXML_RECOVER | LIBXML_NOERROR | LIBXML_NOWARNING);
+        libxml_clear_errors();
+
+        if (! $loaded || $dom->documentElement === null) {
+            throw new RuntimeException("GML の解析に失敗しました（復元不可）: {$path}");
         }
 
         $root   = $dom->documentElement;
