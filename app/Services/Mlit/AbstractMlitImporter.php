@@ -72,11 +72,16 @@ abstract class AbstractMlitImporter
     /**
      * MLIT JPGIS GML (XML) を GeoJSON 互換フィーチャー配列に変換する。
      *
-     * GML 座標は「緯度 経度」順（GeoJSON は「経度 緯度」の逆）。
-     * 要素名は GeoJSON プロパティキーと同一（ksj:P11_001 → P11_001）。
+     * MLIT の GML 形式は以下の2パターンが存在する：
      *
-     * GML 3.1.1（2018年以前データ）と GML 3.2（2019年以降）の両方に対応するため
-     * namespace URI はドキュメントから動的に検出する。
+     * パターンA（旧形式 / 消防署・警察署等）:
+     *   座標が <gml:Point gml:id="pt_xxx"><gml:pos>LAT LON</gml:pos></gml:Point> として
+     *   Dataset 直下に定義され、フィーチャー要素が
+     *   <ksj:position xlink:href="#pt_xxx"/> で参照する。
+     *
+     * パターンB（新形式 / 道の駅等）:
+     *   <gml:featureMember> でフィーチャーを囲み、
+     *   <ksj:position><gml:Point>...</gml:Point></ksj:position> で座標を内包する。
      *
      * @return array<int, array{geometry: array, properties: array}>
      */
@@ -90,7 +95,6 @@ abstract class AbstractMlitImporter
             throw new RuntimeException('GML の解析に失敗しました: ' . implode(', ', $errors));
         }
 
-        // ドキュメントから namespace URI を動的に取得
         $namespaces = $xml->getNamespaces(true);
         $gmlNs = $ksjNs = null;
 
@@ -107,6 +111,25 @@ abstract class AbstractMlitImporter
             throw new RuntimeException("GML の namespace を検出できません: {$path}");
         }
 
+        // ------------------------------------------------------------------
+        // パターンA: Dataset 直下の <gml:Point> を ID → 座標マップに収集
+        // ------------------------------------------------------------------
+        $pointMap = [];
+        foreach ($xml->children($gmlNs)->Point as $point) {
+            $id  = (string) ($point->attributes($gmlNs)['id'] ?? $point->attributes()['id'] ?? '');
+            $pos = trim((string) $point->children($gmlNs)->pos);
+            if ($id !== '' && $pos !== '') {
+                $parts = preg_split('/\s+/', $pos);
+                if (count($parts) >= 2) {
+                    // GML は LAT LON 順 → GeoJSON [LON, LAT]
+                    $pointMap[$id] = [(float) $parts[1], (float) $parts[0]];
+                }
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // パターンB: <gml:featureMember> を使う新形式
+        // ------------------------------------------------------------------
         $features = [];
 
         foreach ($xml->children($gmlNs)->featureMember as $member) {
@@ -116,13 +139,11 @@ abstract class AbstractMlitImporter
 
                 foreach ($feature->children($ksjNs) as $localName => $child) {
                     if ($localName === 'position') {
-                        // <ksj:position><gml:Point><gml:pos>LAT LON</gml:pos></gml:Point></ksj:position>
                         $point = $child->children($gmlNs)->Point ?? null;
                         if ($point) {
                             $pos   = trim((string) $point->children($gmlNs)->pos);
                             $parts = preg_split('/\s+/', $pos);
                             if (count($parts) >= 2) {
-                                // GML は LAT LON 順 → GeoJSON [LON, LAT] に変換
                                 $geometry = [
                                     'type'        => 'Point',
                                     'coordinates' => [(float) $parts[1], (float) $parts[0]],
@@ -137,6 +158,40 @@ abstract class AbstractMlitImporter
                 if ($geometry !== null) {
                     $features[] = ['geometry' => $geometry, 'properties' => $properties];
                 }
+            }
+        }
+
+        if (! empty($features)) {
+            return $features;
+        }
+
+        // ------------------------------------------------------------------
+        // パターンA: ksj フィーチャーが Dataset 直下に並ぶ形式
+        // xlink:href="#pt_xxx" で pointMap を参照する
+        // ------------------------------------------------------------------
+        $xlinkNs = 'http://www.w3.org/1999/xlink';
+
+        foreach ($xml->children($ksjNs) as $feature) {
+            $geometry   = null;
+            $properties = [];
+
+            foreach ($feature->children($ksjNs) as $localName => $child) {
+                if ($localName === 'position') {
+                    $href    = (string) ($child->attributes($xlinkNs)['href'] ?? '');
+                    $pointId = ltrim($href, '#');
+                    if (isset($pointMap[$pointId])) {
+                        $geometry = [
+                            'type'        => 'Point',
+                            'coordinates' => $pointMap[$pointId],
+                        ];
+                    }
+                } else {
+                    $properties[$localName] = (string) $child;
+                }
+            }
+
+            if ($geometry !== null) {
+                $features[] = ['geometry' => $geometry, 'properties' => $properties];
             }
         }
 
