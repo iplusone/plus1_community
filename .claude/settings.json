@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html\")"
+    ]
+  }
+}

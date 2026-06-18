@@ -1,11 +1,15 @@
+@php
+    $href = $spot->source === 'mlit'
+        ? route('mlit-spots.show', $spot->source_id)
+        : route('spots.show', $spot->slug);
+    $initial = preg_replace('/^[^\p{L}\p{N}]+/u', '', $spot->name);
+    $initial = strtoupper(mb_substr($initial, 0, 1));
+    if ($initial === '') { $initial = mb_substr($spot->name, 0, 1); }
+@endphp
 <article class="spot-card">
-    @if ($spot->source === 'spot')
-        <a href="{{ route('spots.show', $spot->slug) }}" class="spot-card__link" aria-label="{{ $spot->name }} の詳細を見る">
-    @else
-        <div class="spot-card__link">
-    @endif
+    <a href="{{ $href }}" class="spot-card__link" aria-label="{{ $spot->name }} の詳細を見る">
         <div class="spot-card__visual">
-            <span>{{ strtoupper(mb_substr($spot->name, 0, 1)) }}</span>
+            <span>{{ $initial }}</span>
         </div>
         <div class="spot-card__body">
             <p class="eyebrow">
@@ -26,9 +30,5 @@
                 </div>
             @endif
         </div>
-    @if ($spot->source === 'spot')
-        </a>
-    @else
-        </div>
-    @endif
+    </a>
 </article>
