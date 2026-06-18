@@ -287,10 +287,15 @@ abstract class AbstractMlitImporter
         $format = 'gml';
 
         // GeoJSON を優先、なければ XML（GML）を使う
+        // KS-META-*.xml はメタデータファイルのためスキップする
         for ($pass = 0; $pass < 2; $pass++) {
             $ext = $pass === 0 ? '.geojson' : '.xml';
             for ($i = 0; $i < $zip->numFiles; $i++) {
-                $name = $zip->getNameIndex($i);
+                $name     = $zip->getNameIndex($i);
+                $basename = basename($name);
+                if (str_starts_with($basename, 'KS-META-')) {
+                    continue;
+                }
                 if (str_ends_with(strtolower($name), $ext)) {
                     $zip->extractTo($tmpDir, $name);
                     $found  = $tmpDir . '/' . $name;
