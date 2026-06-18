@@ -18,22 +18,24 @@ class PoliceImporter extends AbstractMlitImporter
 
     protected function mapFeature(array $properties, array $geometry): ?array
     {
-        $name = trim((string) ($properties['P18_001'] ?? ''));
+        // GeoJSON: P18_001〜004 / GML（旧 JPGIS）: psn, aac, ccd, adr
+        $name      = trim((string) ($properties['P18_001'] ?? $properties['psn'] ?? ''));
+        $adminCode = trim((string) ($properties['P18_002'] ?? $properties['aac'] ?? ''));
+        $typeCode  = $properties['P18_003'] ?? $properties['ccd'] ?? null;
+        $address   = trim((string) ($properties['P18_004'] ?? $properties['adr'] ?? ''));
 
         if ($name === '') {
             return null;
         }
-
-        $adminCode = trim((string) ($properties['P18_002'] ?? ''));
 
         return [
             'sub_category'    => 'police',
             'name'            => $name,
             'pref_code'       => $adminCode ? $this->prefCodeFromAdminCode($adminCode) : null,
             'admin_area_code' => $adminCode ?: null,
-            'address'         => trim((string) ($properties['P18_004'] ?? '')) ?: null,
+            'address'         => $address ?: null,
             'attributes'      => [
-                'type_code' => $properties['P18_003'] ?? null,
+                'type_code' => $typeCode !== null ? (int) $typeCode : null,
             ],
         ];
     }
