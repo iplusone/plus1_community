@@ -28,7 +28,7 @@ class DownloadMlitCommand extends Command
         'P11' => ['type' => 'national', 'url' => self::BASE . 'P11/P11-22/P11-22_GML.zip'],
         'P12' => ['type' => 'national', 'url' => self::BASE . 'P12/P12-14/P12-14_GML.zip'],
         'P20' => ['type' => 'pref', 'url' => self::BASE . 'P20/P20-12/P20-12_{PREF}_GML.zip'],
-        'P04' => ['type' => 'pref', 'url' => self::BASE . 'P04/P04-21/P04-21_{PREF}_GML.zip'],
+        'P04' => ['type' => 'pref', 'url' => self::BASE . 'P04/P04-20/P04-20_{PREF}_GML.zip'],
         'P14' => ['type' => 'pref', 'url' => self::BASE . 'P14/P14-15/P14-15_{PREF}_GML.zip'],
         'A27' => ['type' => 'pref', 'url' => self::BASE . 'A27/A27-16/A27-16_{PREF}_GML.zip'],
         'P17' => ['type' => 'pref', 'url' => self::BASE . 'P17/P17-12/P17-12_{PREF}_GML.zip'],
