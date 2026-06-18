@@ -15,12 +15,14 @@
             <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="キーワード">
             <input id="area-input" type="text" name="area" value="{{ $filters['area'] ?? '' }}" placeholder="エリア・駅・路線" list="area-suggestions" autocomplete="off">
             <datalist id="area-suggestions"></datalist>
-            <input id="genre-input" type="text" name="genre" value="{{ $filters['genre'] ?? '' }}" placeholder="ジャンル" list="genre-suggestions">
-            <datalist id="genre-suggestions"></datalist>
-            <input id="tag-input" type="text" name="tag" value="{{ $filters['tag'] ?? '' }}" placeholder="タグ" list="tag-suggestions">
-            <datalist id="tag-suggestions"></datalist>
+            <select name="category">
+                <option value="">すべてのカテゴリ</option>
+                @foreach ($categoryLabels as $value => $label)
+                    <option value="{{ $value }}" @selected(($filters['category'] ?? '') === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
             <select name="sort">
-                <option value="latest" @selected($sort === 'latest')>新着順</option>
+                <option value="name" @selected($sort === 'name')>名前順</option>
                 <option value="popular" @selected($sort === 'popular')>人気順</option>
             </select>
             <select name="view">
@@ -38,12 +40,12 @@
 
         @if (! $dbWarning)
             <div class="active-filters">
-                @foreach (['q' => 'キーワード', 'area' => 'エリア', 'genre' => 'ジャンル', 'tag' => 'タグ'] as $key => $label)
+                @foreach (['q' => 'キーワード', 'area' => 'エリア', 'category' => 'カテゴリ'] as $key => $label)
                     @if (! empty($filters[$key]))
-                        <span>{{ $label }}: {{ $filters[$key] }}</span>
+                        <span>{{ $label }}: {{ $key === 'category' ? ($categoryLabels[$filters[$key]] ?? $filters[$key]) : $filters[$key] }}</span>
                     @endif
                 @endforeach
-                <span>並び: {{ $sort === 'popular' ? '人気順' : '新着順' }}</span>
+                <span>並び: {{ $sort === 'popular' ? '人気順' : '名前順' }}</span>
                 <span>表示: {{ $viewMode === 'list' ? 'リスト' : 'カード' }}</span>
             </div>
         @endif
@@ -51,20 +53,15 @@
 
     <section class="section-block">
         <div class="result-meta">
-            <p>
-                表示件数:
-                @if ($spots instanceof \Illuminate\Contracts\Pagination\Paginator)
-                    {{ $spots->total() }}
-                @else
-                    0
-                @endif
-                件
-            </p>
+            <p>表示件数: {{ number_format($total) }} 件</p>
         </div>
 
         <div class="{{ $viewMode === 'list' ? 'spot-list' : 'spot-grid' }}">
             @forelse ($spots as $spot)
-                @include($viewMode === 'list' ? 'spots.partials.list-item' : 'spots.partials.card', ['spot' => $spot])
+                @include(
+                    $viewMode === 'list' ? 'spots.partials.list-item' : 'spots.partials.card',
+                    ['spot' => $spot, 'categoryLabels' => $categoryLabels, 'subCategoryLabels' => $subCategoryLabels]
+                )
             @empty
                 <div class="empty-panel">条件に合うスポットはありません。</div>
             @endforelse
