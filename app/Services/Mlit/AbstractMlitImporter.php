@@ -37,13 +37,20 @@ abstract class AbstractMlitImporter
      */
     public function import(string $filePath, bool $dryRun = false): array
     {
-        ['path' => $path, 'format' => $format] = $this->resolveDataFilePath($filePath);
+        $imported = 0;
+        $skipped  = 0;
 
-        $features = $format === 'gml'
-            ? $this->parseGml($path)
-            : $this->parseGeoJson($path);
+        foreach ($this->resolveDataFiles($filePath) as ['path' => $path, 'format' => $format]) {
+            $features = $format === 'gml'
+                ? $this->parseGml($path)
+                : $this->parseGeoJson($path);
 
-        return $this->importFeatures($features, $dryRun);
+            $result    = $this->importFeatures($features, $dryRun);
+            $imported += $result['imported'];
+            $skipped  += $result['skipped'];
+        }
+
+        return ['imported' => $imported, 'skipped' => $skipped];
     }
 
     // -------------------------------------------------------------------------
@@ -224,7 +231,8 @@ abstract class AbstractMlitImporter
             }
         }
 
-        return $geometry !== null ? ['geometry' => $geometry, 'properties' => $properties] : null;
+        // プロパティがあればgeometryがなくても返す（住所のみ登録用）
+        return ! empty($properties) ? ['geometry' => $geometry, 'properties' => $properties] : null;
     }
 
     // -------------------------------------------------------------------------
@@ -243,30 +251,27 @@ abstract class AbstractMlitImporter
         $batch    = [];
 
         foreach ($features as $feature) {
-            $geometry   = $feature['geometry'];
+            $geometry   = $feature['geometry'] ?? null;
             $properties = $feature['properties'];
 
-            if (($geometry['type'] ?? '') !== 'Point') {
+            // Point 以外（ポリゴン等）は座標なしで登録（住所のみのケース）
+            $isPoint = ($geometry['type'] ?? '') === 'Point';
+            $coords  = $isPoint ? ($geometry['coordinates'] ?? null) : null;
+
+            if ($isPoint && (! is_array($coords) || count($coords) < 2)) {
                 $skipped++;
                 continue;
             }
 
-            $coords = $geometry['coordinates'] ?? null;
-
-            if (! is_array($coords) || count($coords) < 2) {
-                $skipped++;
-                continue;
-            }
-
-            $mapped = $this->mapFeature($properties, $geometry);
+            $mapped = $this->mapFeature($properties, $geometry ?? []);
 
             if ($mapped === null) {
                 $skipped++;
                 continue;
             }
 
-            $lat = (float) $coords[1];
-            $lng = (float) $coords[0];
+            $lat = ($coords !== null) ? (float) $coords[1] : null;
+            $lng = ($coords !== null) ? (float) $coords[0] : null;
 
             $row = array_merge([
                 'dataset_code'    => $this->datasetCode(),
@@ -286,9 +291,10 @@ abstract class AbstractMlitImporter
             ]);
 
             if (empty($row['source_id'])) {
-                $row['source_id'] = md5(
-                    round($lat, 5) . ',' . round($lng, 5) . ',' . ($row['name'] ?? '')
-                );
+                // 座標がある場合は座標ベース、ない場合は名称+住所ベースのID
+                $row['source_id'] = $lat !== null
+                    ? md5(round($lat, 5) . ',' . round($lng, 5) . ',' . ($row['name'] ?? ''))
+                    : md5($this->datasetCode() . ':' . ($row['name'] ?? '') . ':' . ($row['address'] ?? ''));
             }
 
             if (is_array($row['attributes'])) {
@@ -337,8 +343,13 @@ abstract class AbstractMlitImporter
     // ファイル解決
     // -------------------------------------------------------------------------
 
-    /** @return array{path: string, format: 'geojson'|'gml'} */
-    private function resolveDataFilePath(string $filePath): array
+    /**
+     * ZIP・GeoJSON・XML を受け取り、処理対象ファイルのリストを返す。
+     * ZIP 内に複数の XML が含まれる場合（P12 等）は全件返す。
+     *
+     * @return array<int, array{path: string, format: 'geojson'|'gml'}>
+     */
+    private function resolveDataFiles(string $filePath): array
     {
         $lower = strtolower($filePath);
 
@@ -352,10 +363,17 @@ abstract class AbstractMlitImporter
 
         $format = str_ends_with($lower, '.geojson') ? 'geojson' : 'gml';
 
-        return ['path' => $filePath, 'format' => $format];
+        return [['path' => $filePath, 'format' => $format]];
     }
 
-    /** @return array{path: string, format: 'geojson'|'gml'} */
+    /**
+     * ZIP を一時ディレクトリに展開し、処理対象ファイルの一覧を返す。
+     * GeoJSON が含まれる場合は GeoJSON のみを返す（GML より優先）。
+     * 複数の XML が含まれる場合（P12 等）は全件返す。
+     * KS-META-*.xml はスキップする。
+     *
+     * @return array<int, array{path: string, format: 'geojson'|'gml'}>
+     */
     private function extractFromZip(string $zipPath): array
     {
         $zip = new ZipArchive;
@@ -367,35 +385,43 @@ abstract class AbstractMlitImporter
         $tmpDir = sys_get_temp_dir() . '/mlit_' . uniqid();
         mkdir($tmpDir, 0755, true);
 
-        $found  = null;
-        $format = 'gml';
+        $geojsons = [];
+        $xmls     = [];
 
-        // GeoJSON を優先、なければ XML（GML）を使う
-        // KS-META-*.xml はメタデータファイルのためスキップする
-        for ($pass = 0; $pass < 2; $pass++) {
-            $ext = $pass === 0 ? '.geojson' : '.xml';
-            for ($i = 0; $i < $zip->numFiles; $i++) {
-                $name     = $zip->getNameIndex($i);
-                $basename = basename($name);
-                if (str_starts_with($basename, 'KS-META-')) {
-                    continue;
-                }
-                if (str_ends_with(strtolower($name), $ext)) {
-                    $zip->extractTo($tmpDir, $name);
-                    $found  = $tmpDir . '/' . $name;
-                    $format = $pass === 0 ? 'geojson' : 'gml';
-                    break 2;
-                }
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name     = $zip->getNameIndex($i);
+            $basename = basename($name);
+            $lower    = strtolower($name);
+
+            if (str_starts_with($basename, 'KS-META-')) {
+                continue;
+            }
+
+            if (str_ends_with($lower, '.geojson')) {
+                $zip->extractTo($tmpDir, $name);
+                $geojsons[] = $tmpDir . '/' . $name;
+            } elseif (str_ends_with($lower, '.xml')) {
+                $zip->extractTo($tmpDir, $name);
+                $xmls[] = $tmpDir . '/' . $name;
             }
         }
 
         $zip->close();
 
-        if ($found === null) {
-            throw new RuntimeException("ZIP に GeoJSON / XML ファイルが見つかりません: {$zipPath}");
+        // GeoJSON が含まれていれば XML は無視（P35 等）
+        if (! empty($geojsons)) {
+            sort($geojsons);
+
+            return array_map(fn ($p) => ['path' => $p, 'format' => 'geojson'], $geojsons);
         }
 
-        return ['path' => $found, 'format' => $format];
+        if (! empty($xmls)) {
+            sort($xmls);
+
+            return array_map(fn ($p) => ['path' => $p, 'format' => 'gml'], $xmls);
+        }
+
+        throw new RuntimeException("ZIP に GeoJSON / XML ファイルが見つかりません: {$zipPath}");
     }
 
     /** 行政区域コード（5桁）から都道府県コード（2桁）を抽出する */
